@@ -114,6 +114,7 @@ Anl1471Processor::Anl1471Processor() : EventProcessor(OFFSET, RANGE, "Anl1471PRo
     associatedTypes.insert("beta");
     associatedTypes.insert("ge");
 
+#ifdef useroot
     stringstream name;
     name << Globals::get()->GetOutputPath()
          << Globals::get()->GetOutputFileName() << ".root";
