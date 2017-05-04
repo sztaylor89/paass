@@ -129,7 +129,7 @@ Anl1471Processor::Anl1471Processor() : EventProcessor(OFFSET, RANGE, "Anl1471PRo
     roottree2_->Branch("gamma", &groot,"gen/D:gtime/D:gcyc/D:gben/D:gbtime/D:gbcyc/D:gid/I:gbid/I");
     roottree2_->Branch("tape", &tapeinfo,"move/b:beam/b");
 
-    qdctof_ = new TH2D("qdctof","",1000,-100,900,16000,0,16000);
+    qdctof_ = new TH2D("qdctof","",1000,-100,900,50000,0,50000);
     Vsize = new TH1D("Vsize","",40,0,40);
     Bsize = new TH1D("Bsize","",40,0,40);
     Gsize =new TH1D("Gsize","",40,0,40);

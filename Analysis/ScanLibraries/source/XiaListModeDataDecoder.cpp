@@ -62,9 +62,9 @@ vector<XiaData *> XiaListModeDataDecoder::DecodeBuffer(
         switch (headerLength) {
             case STATS_BLOCK : // Manual statistics block inserted by poll
                 // this is a manual statistics block inserted by the poll program
-                /*stats.DoStatisticsBlock(&buf[1], modNum);
+                /*stats.DoStatisticsBlock(&buf[1], modNum);*/
                 buf += eventLength;
-                numEvents = -10;*/
+                //numEvents = -10;*/
                 continue;
             case HEADER :
                 break;

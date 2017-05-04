@@ -83,11 +83,11 @@ void VandleProcessor::DeclarePlots(void) {
         "Det Loc vs Trace QDC - Left Even - Right Odd");
 //        DeclareHistogram2D(DD_MAXIMUMBARS, SD, S8,
 //        "Det Loc vs Maximum - Left Even - Right Odd");
-        DeclareHistogram2D(DD_TIMEDIFFBARS, SB, S6,
+        DeclareHistogram2D(DD_TIMEDIFFBARS, SB, S7,
         "Bars vs. Time Differences");
-        DeclareHistogram2D(DD_TOFBARS, SC, S8,
+        DeclareHistogram2D(DD_TOFBARS, SC, S7,
         "Bar vs. Time of Flight");
-        DeclareHistogram2D(DD_CORTOFBARS, SC, S8,
+        DeclareHistogram2D(DD_CORTOFBARS, SC, S7,
         "Bar vs  Cor Time of Flight");
         DeclareHistogram2D(DD_TQDCAVEVSTOF, SC, SD,
         "<E> vs. TOF(0.5ns/bin)");
@@ -111,11 +111,11 @@ void VandleProcessor::DeclarePlots(void) {
 			   "Det Loc vs Trace QDC");
 	//        DeclareHistogram2D(DD_MAXIMUMBARS+BIG_OFFSET, SD, S8,
 	//        "Det Loc vs Maximum");
-        DeclareHistogram2D(DD_TIMEDIFFBARS+BIG_OFFSET, SB, S6,
+        DeclareHistogram2D(DD_TIMEDIFFBARS+BIG_OFFSET, SB, S7,
 			   "Bars vs. Time Differences");
-        DeclareHistogram2D(DD_TOFBARS+BIG_OFFSET, SC, S6,
+        DeclareHistogram2D(DD_TOFBARS+BIG_OFFSET, SC, S7,
 			   "Bar vs. Time of Flight");
-        DeclareHistogram2D(DD_CORTOFBARS+BIG_OFFSET, SC, S6,
+        DeclareHistogram2D(DD_CORTOFBARS+BIG_OFFSET, SC, S7,
 			   "Bar vs  Cor Time of Flight");
         DeclareHistogram2D(DD_TQDCAVEVSTOF+BIG_OFFSET, SC, SD,
 			   "<E> vs. TOF(0.5ns/bin)");
@@ -139,11 +139,11 @@ void VandleProcessor::DeclarePlots(void) {
 			   "Det Loc vs Trace QDC");
 //        DeclareHistogram2D(DD_MAXIMUMBARS+MED_OFFSET, SD, S8,
 //        "Det Loc vs Maximum");
-        DeclareHistogram2D(DD_TIMEDIFFBARS+MED_OFFSET, SB, S6,
+        DeclareHistogram2D(DD_TIMEDIFFBARS+MED_OFFSET, SB, S7,
 			   "Bars vs. Time Differences");
-        DeclareHistogram2D(DD_TOFBARS+MED_OFFSET, SC, S6,
+        DeclareHistogram2D(DD_TOFBARS+MED_OFFSET, SC, S7,
         "Bar vs. Time of Flight");
-        DeclareHistogram2D(DD_CORTOFBARS+MED_OFFSET, SC, S6,
+        DeclareHistogram2D(DD_CORTOFBARS+MED_OFFSET, SC, S7,
         "Bar vs  Cor Time of Flight");
         DeclareHistogram2D(DD_TQDCAVEVSTOF+MED_OFFSET, SC, SD,
         "<E> vs. TOF(0.5ns/bin)");
