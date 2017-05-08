@@ -129,7 +129,16 @@ Anl1471Processor::Anl1471Processor() : EventProcessor(OFFSET, RANGE, "Anl1471PRo
     roottree2_->Branch("gamma", &groot,"gen/D:gtime/D:gcyc/D:gben/D:gbtime/D:gbcyc/D:gid/I:gbid/I");
     roottree2_->Branch("tape", &tapeinfo,"move/b:beam/b");
 
-    qdctof_ = new TH2D("qdctof","",1000,-100,900,50000,0,50000);
+    QDCvsCORTOF_Medium = new TH2D("QDC vs CorTof","",1100,-100,1000,50000,0,50000);
+    BARvsQDC_Medium = new TH2D("Bar vs QDC","",50100,-100,50000,150,0,150);
+    BARvsTDIFF_Medium = new TH2D("Bar vs TDIFF","",2100,-100,2000,150,0,150);
+    BARvsCORTOF_Medium = new TH2D("Bar vs CorTof","",1100,-100,1000,150,0,150);
+    QDCvsCORTOF_Small = new TH2D("QDC vs CorTof","",1100,-100,1000,50000,0,50000);
+    BARvsQDC_Small = new TH2D("Bar vs QDC","",50100,-100,50000,150,0,150);
+    BARvsTDIFF_Small = new TH2D("Bar vs TDIFF","",2100,-100,2000,150,0,150);
+    BARvsCORTOF_Small = new TH2D("Bar vs CorTof","",1100,-100,1000,150,0,150);
+    GAMMA_SINGLES = new TH1D("Gamma Singles","",5100,-100,5000);
+    BETA_GATED_GAMMA = new TH1D("Betad Gated Gamma","",5100,-100,5000);
     Vsize = new TH1D("Vsize","",40,0,40);
     Bsize = new TH1D("Bsize","",40,0,40);
     Gsize =new TH1D("Gsize","",40,0,40);
@@ -155,25 +164,25 @@ Anl1471Processor::~Anl1471Processor() {
 //where everything is done
 bool Anl1471Processor::Process(RawEvent &event) {
     if (!EventProcessor::Process(event))
-        return(false);
+        return (false);
     double plotMult_ = 2;
     double plotOffset_ = 1000;
 
-    BarMap vbars,betas;
+    BarMap vbars, betas;
     map<unsigned int, pair<double, double> > lrtBetas;
 
     BarMap betaStarts_;
     //BarMap betaSingles_;
-    vector<ChanEvent*> geEvts;
-    vector<vector<AddBackEvent> > geAddback;
+    vector < ChanEvent * > geEvts;
+    vector <vector<AddBackEvent>> geAddback;
 
-    if(event.GetSummary("vandle")->GetList().size() != 0)
-        vbars = ((VandleProcessor*)DetectorDriver::get()->
-            GetProcessor("VandleProcessor"))->GetBars();
+    if (event.GetSummary("vandle")->GetList().size() != 0)
+        vbars = ((VandleProcessor *) DetectorDriver::get()->
+                GetProcessor("VandleProcessor"))->GetBars();
 
 
-    static const vector<ChanEvent*> &doubleBetaStarts =
-       event.GetSummary("beta:double:start")->GetList();
+    static const vector<ChanEvent *> &doubleBetaStarts =
+            event.GetSummary("beta:double:start")->GetList();
     BarBuilder startBars(doubleBetaStarts);
     startBars.BuildBars();
     betaStarts_ = startBars.GetBarMap();
@@ -181,10 +190,10 @@ bool Anl1471Processor::Process(RawEvent &event) {
     //if(event.GetSummary("beta:double")->GetList().size() != 0) {
     //    betas = ((DoubleBetaProcessor *) DetectorDriver::get()->
     //            GetProcessor("DoubleBetaProcessor"))->GetBars();
-  //      if (event.GetSummary("beta:double")->GetList().size() != 0) {
+    //      if (event.GetSummary("beta:double")->GetList().size() != 0) {
     //        lrtBetas = ((DoubleBetaProcessor *) DetectorDriver::get()->
-      //              GetProcessor("DoubleBetaProcessor"))->GetLowResBars();
-        //}
+    //              GetProcessor("DoubleBetaProcessor"))->GetLowResBars();
+    //}
     //}
 
     //static const vector<ChanEvent*> &doubleBetaSingles =
@@ -194,27 +203,27 @@ bool Anl1471Processor::Process(RawEvent &event) {
     //betaSingles_=gestartBars.GetBarMap();
 
 
-    if(event.GetSummary("ge")->GetList().size() != 0) {
-        geEvts = ((GeProcessor*)DetectorDriver::get()->
-            GetProcessor("GeProcessor"))->GetGeEvents();
-        geAddback = ((GeProcessor*)DetectorDriver::get()->
-            GetProcessor("GeProcessor"))->GetAddbackEvents();
+    if (event.GetSummary("ge")->GetList().size() != 0) {
+        geEvts = ((GeProcessor *) DetectorDriver::get()->
+                GetProcessor("GeProcessor"))->GetGeEvents();
+        geAddback = ((GeProcessor *) DetectorDriver::get()->
+                GetProcessor("GeProcessor"))->GetAddbackEvents();
     }
 
 #ifdef useroot
     Vsize->Fill(vbars.size());
     Bsize->Fill(betaStarts_.size());
     Gsize->Fill(geEvts.size());
-    
 
-    if(TreeCorrelator::get()->place("TapeMove")->status()){
+
+    if (TreeCorrelator::get()->place("TapeMove")->status()) {
         tapeinfo.move = 1;
-    }else{
+    } else {
         tapeinfo.move = 0;
     }
-    if(TreeCorrelator::get()->place("Beam")->status()){
+    if (TreeCorrelator::get()->place("Beam")->status()) {
         tapeinfo.beam = 1;
-    }else{
+    } else {
         tapeinfo.beam = 0;
     }
     plot(D_tape, tapeinfo.move);
@@ -224,40 +233,40 @@ bool Anl1471Processor::Process(RawEvent &event) {
 
     plot(DD_DEBUGGING3, vbars.size());
     plot(DD_DEBUGGING4, betaStarts_.size());
-    
+
 
     //Begin processing for VANDLE bars
-    for (BarMap::iterator it = vbars.begin(); it !=  vbars.end(); it++) {
+    for (BarMap::iterator it = vbars.begin(); it != vbars.end(); it++) {
         TimingDefs::TimingIdentifier barId = (*it).first;
         BarDetector bar = (*it).second;
 
-        if(!bar.GetHasEvent())
+        if (!bar.GetHasEvent())
             continue;
 
-	if(bar.GetType() == "small")
-	    barType = 0;
-	else if (bar.GetType() == "medium")
-	    barType = 1;
+        if (bar.GetType() == "small")
+            barType = 0;
+        else if (bar.GetType() == "medium")
+            barType = 1;
 
 
-	//stuff to test TDIFF spike
-	/*if (barId.first == 2){
-		plot(DD_DEBUGGING0,
-		     bar.GetTimeDifference()*2+1000,
-		     bar.GetLeftSide().GetMaximumValue());
-		plot(DD_DEBUGGING1,
-		     bar.GetTimeDifference()*2+1000,
-		     bar.GetRightSide().GetMaximumValue());
-		}
-	    plot(DD_DEBUGGING2,
-		 bar.GetTimeDifference()*2+1000, barId.first);
-	*/
+        //stuff to test TDIFF spike
+        /*if (barId.first == 2){
+            plot(DD_DEBUGGING0,
+                 bar.GetTimeDifference()*2+1000,
+                 bar.GetLeftSide().GetMaximumValue());
+            plot(DD_DEBUGGING1,
+                 bar.GetTimeDifference()*2+1000,
+                 bar.GetRightSide().GetMaximumValue());
+            }
+            plot(DD_DEBUGGING2,
+             bar.GetTimeDifference()*2+1000, barId.first);
+        */
         unsigned int barLoc = barId.first;
         const TimingCalibration cal = bar.GetCalibration();
 
 
-        for(BarMap::iterator itStart = betaStarts_.begin();
-	    itStart != betaStarts_.end(); itStart++) {
+        for (BarMap::iterator itStart = betaStarts_.begin();
+             itStart != betaStarts_.end(); itStart++) {
             BarDetector beta_start = (*itStart).second;
             unsigned int startLoc = (*itStart).first.first;
             if (!beta_start.GetHasEvent())
@@ -294,55 +303,65 @@ bool Anl1471Processor::Process(RawEvent &event) {
             plot(DD_DEBUGGING9, beta_start.GetLeftSide().GetTraceQdc(),
                  beta_start.GetLeftSide().GetTrace().GetSignalToNoiseRatio());
 
-	    //adding HPGE energy info to vandle tree
-	    double HPGE_energy=-9999.0;
-            if (geEvts.size() !=0){
+            //adding HPGE energy info to vandle tree
+            double HPGE_energy = -9999.0;
+            if (geEvts.size() != 0) {
                 for (vector<ChanEvent *>::const_iterator itHPGE = geEvts.begin();
                      itHPGE != geEvts.end(); itHPGE++) {
                     HPGE_energy = (*itHPGE)->GetCalibratedEnergy();
                 }
 
-            }else{
+            } else {
                 HPGE_energy = -8888.0;
             }
 
 #ifdef useroot
-	    vroot.tof   = corTof*2+1000;//to make identicle to damm output
-	    vroot.qdc   = bar.GetQdc();
-	    vroot.snrl  = bar.GetLeftSide().GetTrace().GetSignalToNoiseRatio();
-	    vroot.snrr  = bar.GetRightSide().GetTrace().GetSignalToNoiseRatio();
-	    vroot.pos   = bar.GetQdcPosition();
-	    vroot.tdiff = bar.GetTimeDifference();
-	    vroot.ben = beta_start.GetQdc();
-	    vroot.bqdcl = beta_start.GetLeftSide().GetTraceQdc();
-	    vroot.bqdcr = beta_start.GetRightSide().GetTraceQdc();
-	    vroot.bsnrl = beta_start.GetLeftSide().GetTrace().GetSignalToNoiseRatio();
-	    vroot.bsnrr = beta_start.GetRightSide().GetTrace().GetSignalToNoiseRatio();
-	    vroot.cyc = 0;  /////////it.GetEventTime();
-	    vroot.bcyc = 0;  /////////itStart.GetEventTime()
-	    vroot.HPGE = HPGE_energy;
-	    vroot.vid   = barLoc;
-	    vroot.vtype = barType;
-	    vroot.bid = startLoc;
+            vroot.tof = corTof;
+            vroot.qdc = bar.GetQdc();
+            vroot.snrl = bar.GetLeftSide().GetTrace().GetSignalToNoiseRatio();
+            vroot.snrr = bar.GetRightSide().GetTrace().GetSignalToNoiseRatio();
+            vroot.pos = bar.GetQdcPosition();
+            vroot.tdiff = bar.GetTimeDifference();
+            vroot.ben = beta_start.GetQdc();
+            vroot.bqdcl = beta_start.GetLeftSide().GetTraceQdc();
+            vroot.bqdcr = beta_start.GetRightSide().GetTraceQdc();
+            vroot.bsnrl = beta_start.GetLeftSide().GetTrace().GetSignalToNoiseRatio();
+            vroot.bsnrr = beta_start.GetRightSide().GetTrace().GetSignalToNoiseRatio();
+            vroot.cyc = 0;  /////////it.GetEventTime();
+            vroot.bcyc = 0;  /////////itStart.GetEventTime()
+            vroot.HPGE = HPGE_energy;
+            vroot.vid = barLoc;
+            vroot.vtype = barType;
+            vroot.bid = startLoc;
 #endif
 
 
 #ifdef useroot
-	    BETA->Fill(vroot.bqdcl,vroot.bsnrl);
-	    qdctof_->Fill(tof,bar.GetQdc());
-	    qdc_ = bar.GetQdc();
-	    tof = tof;
-	    roottree1_->Fill();
-	    // bar.GetLeftSide().ZeroRootStructure(leftVandle);
-	    // bar.GetRightSide().ZeroRootStructure(rightVandle);
-	    // beta_start.GetLeftSide().ZeroRootStructure(leftBeta);
-	    // beta_start.GetRightSide().ZeroRootStructure(rightBeta);
-	    qdc_ = tof = -9999;
-	    //VID = BID = SNRVL = SNRVR = -9999;
-	    //GamEn = SNRBL = SNRBR = vandle_ = beta_ = ge_ = -9999;
+            if (barType == 1) {
+                QDCvsCORTOF_Medium->Fill(corTof, bar.GetQdc());
+                BARvsQDC_Medium->Fill(bar.GetQdc(), barLoc);
+                BARvsTDIFF_Medium->Fill(bar.GetTimeDifference(), barLoc);
+                BARvsCORTOF_Medium->Fill(corTof, barLoc);
+            } else if (barType == 0) {
+                QDCvsCORTOF_Small->Fill(corTof, bar.GetQdc());
+                BARvsQDC_Small->Fill(bar.GetQdc(), barLoc);
+                BARvsTDIFF_Small->Fill(bar.GetTimeDifference(), barLoc);
+                BARvsCORTOF_Small->Fill(corTof, barLoc);
+            }
+            BETA->Fill(vroot.bqdcl, vroot.bsnrl);
+            qdc_ = bar.GetQdc();
+            tof = tof;
+            roottree1_->Fill();
+            // bar.GetLeftSide().ZeroRootStructure(leftVandle);
+            // bar.GetRightSide().ZeroRootStructure(rightVandle);
+            // beta_start.GetLeftSide().ZeroRootStructure(leftBeta);
+            // beta_start.GetRightSide().ZeroRootStructure(rightBeta);
+            qdc_ = tof = -9999;
+            //VID = BID = SNRVL = SNRVR = -9999;
+            //GamEn = SNRBL = SNRBR = vandle_ = beta_ = ge_ = -9999;
 #endif
 
-	    plot(DD_DEBUGGING1, tof*plotMult_+plotOffset_, bar.GetQdc());
+            plot(DD_DEBUGGING1, tof * plotMult_ + plotOffset_, bar.GetQdc());
 
         } // for(TimingMap::iterator itStart
     } //(BarMap::iterator itBar
@@ -354,63 +373,66 @@ bool Anl1471Processor::Process(RawEvent &event) {
 
     //Stuff to fill HPGe branch
 
-    if (geEvts.size() !=0){
-	for (vector<ChanEvent *>::const_iterator itGe = geEvts.begin();
-                itGe != geEvts.end(); itGe++) {
-	    double ge_energy,ge_time, gb_time_L, gb_time_R, gb_time, grow_decay_time, gb_en, gcyc_time;
-	    ge_energy=ge_time=gb_time_L=gb_time_R=gb_time=grow_decay_time=gb_en=gcyc_time=-9999.0;
-	    int ge_id=-9999;
-	    int gb_startLoc=-9999;
-	    BarDetector gb_start;
-	    ge_energy = (*itGe)->GetCalibratedEnergy();
-	    ge_id = (*itGe)->GetChanID().GetLocation();
-	    ge_time = (*itGe)->GetWalkCorrectedTime();
-	    ge_time *= (Globals::get()->GetClockInSeconds() * 1.e9);//in ns now
-	    
-	    if (TreeCorrelator::get()->place("Cycle")->status()) {
-            gcyc_time = TreeCorrelator::get()->place("Cycle")->last().time;
-		    gcyc_time *=  (Globals::get()->GetClockInSeconds() * 1.e9);//in ns now
-	       	grow_decay_time = (ge_time - gcyc_time)*1e-9*1e2;//in seconds, then ms
-		//cout << ge_energy << endl << grow_decay_time << endl << endl;
-		plot(DD_grow_decay, ge_energy, grow_decay_time);
-	    }
+    if (geEvts.size() != 0) {
+        for (vector<ChanEvent *>::const_iterator itGe = geEvts.begin();
+             itGe != geEvts.end(); itGe++) {
+            double ge_energy, ge_time, gb_time_L, gb_time_R, gb_time, grow_decay_time, gb_en, gcyc_time;
+            ge_energy = ge_time = gb_time_L = gb_time_R = gb_time = grow_decay_time = gb_en = gcyc_time = -9999.0;
+            int ge_id = -9999;
+            int gb_startLoc = -9999;
+            BarDetector gb_start;
+            ge_energy = (*itGe)->GetCalibratedEnergy();
+            ge_id = (*itGe)->GetChanID().GetLocation();
+            ge_time = (*itGe)->GetWalkCorrectedTime();
+            ge_time *= (Globals::get()->GetClockInSeconds() * 1.e9);//in ns now
 
-	    if (doubleBetaStarts.size() != 0){
-		for (BarMap::iterator itGB = betaStarts_.begin();
-                itGB != betaStarts_.end(); itGB++){
-		    gb_start = (*itGB).second;
-		    gb_startLoc = (*itGB).first.first;
-		    gb_en = gb_start.GetQdc();
-		    gb_time_L = gb_start.GetLeftSide().GetHighResTimeInNs();//GetCorrectedTime()??
-		    gb_time_R = gb_start.GetRightSide().GetHighResTimeInNs();//GetTimeAverage()??
-		    gb_time = (gb_time_L + gb_time_R)/2;
-		    gb_time *= (Globals::get()->GetClockInSeconds() * 1.e9);//in ns now
-		}
-	    }else{
-		gb_startLoc = -9999;
-		gb_en = -9999;
-		gb_time = -9999;
-	    }
-	    
-	    
-	    
-	    
-	    
+            if (TreeCorrelator::get()->place("Cycle")->status()) {
+                gcyc_time = TreeCorrelator::get()->place("Cycle")->last().time;
+                gcyc_time *= (Globals::get()->GetClockInSeconds() *
+                              1.e9);//in ns now
+                grow_decay_time =
+                        (ge_time - gcyc_time) * 1e-9 * 1e2;//in seconds, then ms
+                //cout << ge_energy << endl << grow_decay_time << endl << endl;
+                plot(DD_grow_decay, ge_energy, grow_decay_time);
+            }
+
+            if (doubleBetaStarts.size() != 0) {
+                for (BarMap::iterator itGB = betaStarts_.begin();
+                     itGB != betaStarts_.end(); itGB++) {
+                    gb_start = (*itGB).second;
+                    gb_startLoc = (*itGB).first.first;
+                    gb_en = gb_start.GetQdc();
+                    gb_time_L = gb_start.GetLeftSide().GetHighResTimeInNs();//GetCorrectedTime()??
+                    gb_time_R = gb_start.GetRightSide().GetHighResTimeInNs();//GetTimeAverage()??
+                    gb_time = (gb_time_L + gb_time_R) / 2;
+                    gb_time *= (Globals::get()->GetClockInSeconds() *
+                                1.e9);//in ns now
+                }
+            } else {
+                gb_startLoc = -9999;
+                gb_en = -9999;
+                gb_time = -9999;
+            }
+
+
 #ifdef useroot
-	    groot.gen = ge_energy;
-	    groot.gtime = ge_time;
-	    groot.gcyc = ge_time-gcyc_time;
-	    groot.gben = gb_en;
-	    groot.gbtime = gb_time;
-	    groot.gbcyc = gb_time-gcyc_time;
-	    groot.gid = ge_id;
-	    groot.gbid = gb_startLoc;
-	    roottree2_->Fill();
-#endif
-	    
-	}
-    }
+            groot.gen = ge_energy;
+            groot.gtime = ge_time;
+            groot.gcyc = ge_time - gcyc_time;
+            groot.gben = gb_en;
+            groot.gbtime = gb_time;
+            groot.gbcyc = gb_time - gcyc_time;
+            groot.gid = ge_id;
+            groot.gbid = gb_startLoc;
 
+            roottree2_->Fill();
+            GAMMA_SINGLES->Fill(ge_energy);
+            if (doubleBetaStarts.size() != 0) {
+                BETA_GATED_GAMMA->Fill(ge_energy);
+            }
+#endif
+        }
+    }
 
    
    EndProcess();

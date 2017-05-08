@@ -52,7 +52,16 @@ private:
     TFile *rootfile_;
     TTree *roottree1_;
     TTree *roottree2_;
-    TH2D *qdctof_;
+    TH2D *QDCvsCORTOF_Medium;
+    TH2D *BARvsQDC_Medium;
+    TH2D *BARvsTDIFF_Medium;
+    TH2D *BARvsCORTOF_Medium;
+    TH2D *QDCvsCORTOF_Small;
+    TH2D *BARvsQDC_Small;
+    TH2D *BARvsTDIFF_Small;
+    TH2D *BARvsCORTOF_Small;
+    TH1D *GAMMA_SINGLES;
+    TH1D *BETA_GATED_GAMMA;
     TH1D *Vsize;
     TH1D *Bsize;
     TH1D *Gsize;
