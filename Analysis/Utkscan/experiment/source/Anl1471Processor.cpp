@@ -129,16 +129,16 @@ Anl1471Processor::Anl1471Processor() : EventProcessor(OFFSET, RANGE, "Anl1471PRo
     roottree2_->Branch("gamma", &groot,"gen/D:gtime/D:gcyc/D:gben/D:gbtime/D:gbcyc/D:gid/I:gbid/I");
     roottree2_->Branch("tape", &tapeinfo,"move/b:beam/b");
 
-    QDCvsCORTOF_Medium = new TH2D("MED-QDC vs CorTof","",1100,-100,1000,50000,0,50000);
-    BARvsQDC_Medium = new TH2D("MED-Bar vs QDC","",50100,-100,50000,150,0,150);
-    BARvsTDIFF_Medium = new TH2D("MED-Bar vs TDIFF","",2100,-100,2000,150,0,150);
-    BARvsCORTOF_Medium = new TH2D("MED-Bar vs CorTof","",1100,-100,1000,150,0,150);
-    QDCvsCORTOF_Small = new TH2D("SM-QDC vs CorTof","",1100,-100,1000,50000,0,50000);
-    BARvsQDC_Small = new TH2D("SM-Bar vs QDC","",50100,-100,50000,150,0,150);
-    BARvsTDIFF_Small = new TH2D("SM-Bar vs TDIFF","",2100,-100,2000,150,0,150);
-    BARvsCORTOF_Small = new TH2D("SM-Bar vs CorTof","",1100,-100,1000,150,0,150);
-    GAMMA_SINGLES = new TH1D("Gamma Singles","",5100,-100,5000);
-    BETA_GATED_GAMMA = new TH1D("Betad Gated Gamma","",5100,-100,5000);
+    QDCvsCORTOF_Medium = new TH2D("MED-QDC vs CorTof","",1100,-100,1000,25000,0,25000);
+    BARvsQDC_Medium = new TH2D("MED-Bar vs QDC","",25100,-100,25000,25,0,25);
+    BARvsTDIFF_Medium = new TH2D("MED-Bar vs TDIFF","",1500,-750,750,25,0,25);
+    BARvsCORTOF_Medium = new TH2D("MED-Bar vs CorTof","",1100,-100,1000,25,0,25);
+    QDCvsCORTOF_Small = new TH2D("SM-QDC vs CorTof","",1100,-100,1000,25000,0,25000);
+    BARvsQDC_Small = new TH2D("SM-Bar vs QDC","",25100,-100,25000,25,0,25);
+    BARvsTDIFF_Small = new TH2D("SM-Bar vs TDIFF","",1500,-750,750,25,0,25);
+    BARvsCORTOF_Small = new TH2D("SM-Bar vs CorTof","",1100,-100,1000,25,0,25);
+    GAMMA_SINGLES = new TH1D("Gamma Singles","",3100,-100,3000);
+    BETA_GATED_GAMMA = new TH1D("Betad Gated Gamma","",3100,-100,3000);
     Vsize = new TH1D("Vsize","",40,0,40);
     Bsize = new TH1D("Bsize","",40,0,40);
     Gsize =new TH1D("Gsize","",40,0,40);
