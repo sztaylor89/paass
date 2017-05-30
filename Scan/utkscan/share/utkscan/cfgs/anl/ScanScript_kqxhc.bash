@@ -1,10 +1,15 @@
 #!/bin/bash
 
+#date: 5/30/17
+#author: S. Z. Taylor
+#email: staylo65@vols.utk.edu
+
 output=${1:-aaa}    #output filename, reads in 1st command line argument, otherwise defaults to aaa
 data="/scratch2/anl2015/FEB2015/135SB/"    #data directory
 config="Config_Test.xml"    #config filename
 config_path="/home/sztaylor/paass/Scan/utkscan/share/utkscan/cfgs/anl"    #config directory
 firmware="R30981"    #firmware version
+hz="250"   #frequency of pixie boards used
 
 rm -f $output.his $output.dat $output.drr $output.list $output.log $output.root    #removes files if they already exist
 
@@ -26,7 +31,7 @@ cmd=$cmd"quit\n"    #closes the program
 
 #echo -e $cmd    #useful for testing your cmd formatting
 
-echo -e $cmd | ./utkscan -c $config_path/$config -o $output -f $firmware --frequency 250 &    #runs the program
+echo -e $cmd | ./utkscan -c $config_path/$config -o $output -f $firmware --frequency $hz   #runs the program
 
 #to kill program, you will have to kill the process.  CTRL+c will not work due to ncurses used by utkscan.  I would suggest doing 'ps aux | grep (user)' to find the PID, then issue a kill (PID#) to stop the program.  I am currently looking into how to pass SIGKILL to a child process and will update this script accordingly.
 
