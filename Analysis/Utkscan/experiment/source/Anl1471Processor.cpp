@@ -72,10 +72,10 @@ GammaRoot groot;
 
 namespace dammIds {
     namespace experiment {
-        const int DD_DEBUGGING0  = 0;
-        const int DD_DEBUGGING1  = 1;
-        const int DD_DEBUGGING2  = 2;
-        const int DD_DEBUGGING3  = 3;
+        const int DD_TRACES  = 0;
+        const int DD_FLASHTRACES  = 1;
+        const int D_BADLOCATION  = 2;
+        const int D_STARTLOC  = 3;
         const int DD_DEBUGGING4  = 4;
         const int DD_MedCTOFvQDC  = 5;
         const int DD_MedVetoed  = 6;
@@ -92,10 +92,10 @@ using namespace std;
 using namespace dammIds::experiment;
 
 void Anl1471Processor::DeclarePlots(void) {
-    DeclareHistogram2D(DD_DEBUGGING0, SB, SD, "left-MaxValvsTDIFF");
-    DeclareHistogram2D(DD_DEBUGGING1, SB, SD, "right-MaxValvsTDIFF");
-    DeclareHistogram2D(DD_DEBUGGING2, SB, S6, "TDIFF-vandle");
-    DeclareHistogram1D(DD_DEBUGGING3, S7, "Vandle Multiplicity");
+    DeclareHistogram2D(DD_TRACES, S8, SE, "traces");
+    DeclareHistogram2D(DD_FLASHTRACES, S8, SE, "traces gated +/- 15 of the flash center");
+    DeclareHistogram1D(D_BADLOCATION, S6, "'bad' trace bar location");
+    DeclareHistogram1D(D_STARTLOC, SB, "Detector Referenced as Start for vandle");
     DeclareHistogram1D(DD_DEBUGGING4, S7, "Beta Multiplicity");
     DeclareHistogram2D(DD_MedCTOFvQDC, SC, SD, "ANL-medium-<E>-vs-CorTof");
     DeclareHistogram2D(DD_MedVetoed, SC, SD, "ANL-medium-vetoed");
@@ -231,7 +231,7 @@ bool Anl1471Processor::Process(RawEvent &event) {
 #endif
 
 
-    plot(DD_DEBUGGING3, vbars.size());
+    //plot(DD_DEBUGGING3, vbars.size());
     plot(DD_DEBUGGING4, betaStarts_.size());
 
 
@@ -315,6 +315,31 @@ bool Anl1471Processor::Process(RawEvent &event) {
                 HPGE_energy = -8888.0;
             }
 
+	    //Stuff to check periodic peak traces
+	    //static int trcCounter = 0;
+            static int ftrcCounter = 0;
+            double dammBin = (corTof * 2) + 1000;
+            //static int badTrcEvtCounter = 0;
+            if (dammBin >= 680 && dammBin <= 710) {//center at 695
+            //if (dammBin >= 1290 && dammBin <= 1320) {//center at 1305
+                for (vector<unsigned int>::const_iterator itTL = bar.GetLeftSide().GetTrace().begin();
+                     itTL != bar.GetLeftSide().GetTrace().end(); itTL++) {
+                    plot(DD_FLASHTRACES, itTL - bar.GetLeftSide().GetTrace().begin(), ftrcCounter, (*itTL));
+                }
+                for (vector<unsigned int>::const_iterator itTR = bar.GetRightSide().GetTrace().begin();
+                     itTR != bar.GetRightSide().GetTrace().end(); itTR++) {
+                    plot(DD_FLASHTRACES, itTR - bar.GetRightSide().GetTrace().begin(),
+                         ftrcCounter + 1, (*itTR));
+                }
+                ftrcCounter += 3;
+
+                plot(D_BADLOCATION, barLoc);
+                plot(D_STARTLOC,startLoc);
+                
+            }
+
+
+
 #ifdef useroot
             vroot.tof = corTof;
             vroot.qdc = bar.GetQdc();
@@ -361,7 +386,7 @@ bool Anl1471Processor::Process(RawEvent &event) {
             //GamEn = SNRBL = SNRBR = vandle_ = beta_ = ge_ = -9999;
 #endif
 
-            plot(DD_DEBUGGING1, tof * plotMult_ + plotOffset_, bar.GetQdc());
+	    //            plot(DD_DEBUGGING1, tof * plotMult_ + plotOffset_, bar.GetQdc());
 
         } // for(TimingMap::iterator itStart
     } //(BarMap::iterator itBar
