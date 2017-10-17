@@ -165,8 +165,8 @@ Anl1471Processor::~Anl1471Processor() {
 bool Anl1471Processor::Process(RawEvent &event) {
     if (!EventProcessor::Process(event))
         return (false);
-    double plotMult_ = 2;
-    double plotOffset_ = 1000;
+    //double plotMult_ = 2;
+    //double plotOffset_ = 1000;
 
     BarMap vbars, betas;
     map<unsigned int, pair<double, double> > lrtBetas;
@@ -306,19 +306,25 @@ bool Anl1471Processor::Process(RawEvent &event) {
             //adding HPGE energy info to vandle tree
             double HPGE_energy = -9999.0;
             if (geEvts.size() != 0) {
-                for (vector<ChanEvent *>::const_iterator itHPGE = geEvts.begin();
-                     itHPGE != geEvts.end(); itHPGE++) {
-                    HPGE_energy = (*itHPGE)->GetCalibratedEnergy();
-                }
-
-            } else {
+	      for (vector<ChanEvent *>::const_iterator itHPGE = geEvts.begin();
+		   itHPGE != geEvts.end(); itHPGE++){ 
+                double B_time, G_time, BG_TDIFF;
+                G_time = (*itHPGE)->GetTime();
+                B_time = (*itStart)->GetTime();
+                BG_TDIFF = G_time - B_time;
+                if (BG_TDIFF > 0 && BG_TDIFF < 10000){ // need to figure out this upper limit
+		  HPGE_energy = (*itHPGE)->GetCalibratedEnergy(); 
+                }else{ 
+		  HPGE_energy = -7777.0;
+		}}
+	    }else{ 
                 HPGE_energy = -8888.0;
-            }
-
+	    }
+	
 	    //Stuff to check periodic peak traces
 	    //static int trcCounter = 0;
-            static int ftrcCounter = 0;
- /*           double dammBin = (corTof * 2) + 1000;
+ /*           static int ftrcCounter = 0;
+            double dammBin = (corTof * 2) + 1000;
             //static int badTrcEvtCounter = 0;
             if (dammBin >= 680 && dammBin <= 710) {//center at 695
             //if (dammBin >= 1290 && dammBin <= 1320) {//center at 1305
