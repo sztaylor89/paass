@@ -1,5 +1,5 @@
 /** \file Anl1471Processor.hpp
- * \brief A class to process data from the LeRIBSS 2012 campaign.
+ * \brief A class to process data from the ANL 2015 campaign.
  *
  *\author S. Z. Taylor
  *\date September 19, 2015

@@ -318,7 +318,7 @@ bool Anl1471Processor::Process(RawEvent &event) {
 	    //Stuff to check periodic peak traces
 	    //static int trcCounter = 0;
             static int ftrcCounter = 0;
-            double dammBin = (corTof * 2) + 1000;
+ /*           double dammBin = (corTof * 2) + 1000;
             //static int badTrcEvtCounter = 0;
             if (dammBin >= 680 && dammBin <= 710) {//center at 695
             //if (dammBin >= 1290 && dammBin <= 1320) {//center at 1305
@@ -337,7 +337,7 @@ bool Anl1471Processor::Process(RawEvent &event) {
                 plot(D_STARTLOC,startLoc);
                 
             }
-
+*/
 
 
 #ifdef useroot
