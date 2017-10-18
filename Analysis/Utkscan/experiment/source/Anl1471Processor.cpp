@@ -309,14 +309,17 @@ bool Anl1471Processor::Process(RawEvent &event) {
 	      for (vector<ChanEvent *>::const_iterator itHPGE = geEvts.begin();
 		   itHPGE != geEvts.end(); itHPGE++){ 
                 double B_time, G_time, BG_TDIFF;
-                G_time = (*itHPGE)->GetTime();
-                B_time = (*itStart)->GetTime();
+                G_time = (*itHPGE)->GetTime();//gives result in clock ticks
+                G_time *= Globals::get()->GetClockInSeconds() * 1.e9; //converts clock ticks to ns
+                B_time = beta_start.GetCorTimeAve(); //gives result in ns
                 BG_TDIFF = G_time - B_time;
-                if (BG_TDIFF > 0 && BG_TDIFF < 10000){ // need to figure out this upper limit
-		  HPGE_energy = (*itHPGE)->GetCalibratedEnergy(); 
-                }else{ 
-		  HPGE_energy = -7777.0;
-		}}
+                if (BG_TDIFF > 0) { // && BG_TDIFF < 10000){ // need to figure out this upper limit if needed, toby thinks not
+                    // max would probably be about 500ns, but more likely 300ns
+                    HPGE_energy = (*itHPGE)->GetCalibratedEnergy();
+                }else {
+                    HPGE_energy = -7777.0;
+                }
+          }
 	    }else{ 
                 HPGE_energy = -8888.0;
 	    }
