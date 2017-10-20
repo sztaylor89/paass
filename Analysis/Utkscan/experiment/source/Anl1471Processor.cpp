@@ -73,7 +73,7 @@ GammaRoot groot;
 namespace dammIds {
     namespace experiment {
         const int DD_TRACES  = 0;
-        const int DD_FLASHTRACES  = 1;
+        const int D_TEST  = 1;
         const int D_BADLOCATION  = 2;
         const int D_STARTLOC  = 3;
         const int DD_DEBUGGING4  = 4;
@@ -93,7 +93,7 @@ using namespace dammIds::experiment;
 
 void Anl1471Processor::DeclarePlots(void) {
     DeclareHistogram2D(DD_TRACES, S8, SE, "traces");
-    DeclareHistogram2D(DD_FLASHTRACES, S8, SE, "traces gated +/- 15 of the flash center");
+    DeclareHistogram1D(D_TEST, S8, "beta gamma neutron test hist");
     DeclareHistogram1D(D_BADLOCATION, S6, "'bad' trace bar location");
     DeclareHistogram1D(D_STARTLOC, SB, "Detector Referenced as Start for vandle");
     DeclareHistogram1D(DD_DEBUGGING4, S7, "Beta Multiplicity");
@@ -309,13 +309,18 @@ bool Anl1471Processor::Process(RawEvent &event) {
 	      for (vector<ChanEvent *>::const_iterator itHPGE = geEvts.begin();
 		   itHPGE != geEvts.end(); itHPGE++){ 
                 double B_time, G_time, BG_TDIFF;
-                G_time = (*itHPGE)->GetTime();//gives result in clock ticks
+                G_time = (*itHPGE)->GetTimeSansCfd();//gives result in clock ticks
+                //double GG = (*itHPGE)->GetTimeSansCfd();// used as check
                 G_time *= Globals::get()->GetClockInSeconds() * 1.e9; //converts clock ticks to ns
                 B_time = beta_start.GetCorTimeAve(); //gives result in ns
                 BG_TDIFF = G_time - B_time;
-                if (BG_TDIFF > 0) { // && BG_TDIFF < 10000){ // need to figure out this upper limit if needed, toby thinks not
+              //cout << fixed;
+              //cout << endl<<endl<<endl<<"gg= "<< GG <<"       g= "<<G_time<<"   b= "<<B_time<< "      diff= "<< BG_TDIFF <<
+              // endl<< endl << endl;
+                if (BG_TDIFF > 0 && BG_TDIFF < 100){ // need to figure out this upper limit if needed, toby thinks not
                     // max would probably be about 500ns, but more likely 300ns
                     HPGE_energy = (*itHPGE)->GetCalibratedEnergy();
+                    plot (D_TEST, HPGE_energy);
                 }else {
                     HPGE_energy = -7777.0;
                 }
