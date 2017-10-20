@@ -317,7 +317,7 @@ bool Anl1471Processor::Process(RawEvent &event) {
               //cout << fixed;
               //cout << endl<<endl<<endl<<"gg= "<< GG <<"       g= "<<G_time<<"   b= "<<B_time<< "      diff= "<< BG_TDIFF <<
               // endl<< endl << endl;
-                if (BG_TDIFF > 0 && BG_TDIFF < 100){ // need to figure out this upper limit if needed, toby thinks not
+                if (BG_TDIFF > 0){// && BG_TDIFF < 100){ // need to figure out this upper limit if needed, toby thinks not
                     // max would probably be about 500ns, but more likely 300ns
                     HPGE_energy = (*itHPGE)->GetCalibratedEnergy();
                     plot (D_TEST, HPGE_energy);
