@@ -94,7 +94,7 @@ using namespace dammIds::experiment;
 
 void Anl1471Processor::DeclarePlots(void) {
     DeclareHistogram2D(DD_TRACES, S8, SE, "traces");
-    DeclareHistogram1D(D_TEST, S8, "beta gamma neutron test hist");
+    DeclareHistogram1D(D_TEST, SD, "beta gamma neutron test hist");
     DeclareHistogram1D(D_BADLOCATION, S6, "'bad' trace bar location");
     DeclareHistogram1D(D_STARTLOC, SB, "Detector Referenced as Start for vandle");
     DeclareHistogram1D(DD_DEBUGGING4, S7, "Beta Multiplicity");
