@@ -44,6 +44,7 @@ struct VandleRoot{
     double cyc;
     double bcyc;
     double HPGE;
+    double BGtime;
     int vid;
     int vtype;
     int bid;
@@ -123,7 +124,8 @@ Anl1471Processor::Anl1471Processor() : EventProcessor(OFFSET, RANGE, "Anl1471PRo
     roottree1_ = new TTree("V","");
     roottree2_ = new TTree("G","");
 
-    roottree1_->Branch("vandle", &vroot, "tof/D:qdc/D:snrl/D:snrr/D:pos/D:tdiff/D:ben/D:bqdcl/D:bqdcr/D:bsnrl/D:bsnrr/D:cyc/D:bcyc/D:HPGE/D:vid/I:vtype/I:bid/I");
+    roottree1_->Branch("vandle", &vroot, "tof/D:qdc/D:snrl/D:snrr/D:pos/D:tdiff/D:ben/D:bqdcl/D:bqdcr/D:bsnrl/D:bsnrr/D:cyc/D"
+            ":bcyc/D:HPGE/D:BGtdiff/D:vid/I:vtype/I:bid/I");
     roottree1_->Branch("tape", &tapeinfo,"move/b:beam/b");
 
     roottree2_->Branch("gamma", &groot,"gen/D:gtime/D:gcyc/D:gben/D:gbtime/D:gbcyc/D:gid/I:gbid/I");
@@ -305,10 +307,11 @@ bool Anl1471Processor::Process(RawEvent &event) {
 
             //adding HPGE energy info to vandle tree
             double HPGE_energy = -9999.0;
+            double BG_TDIFF = -9999.0;
             if (geEvts.size() != 0) {
 	      for (vector<ChanEvent *>::const_iterator itHPGE = geEvts.begin();
 		   itHPGE != geEvts.end(); itHPGE++){ 
-                double B_time, G_time, BG_TDIFF;
+                double B_time, G_time;
                 G_time = (*itHPGE)->GetTimeSansCfd();//gives result in clock ticks
                 //double GG = (*itHPGE)->GetTimeSansCfd();// used as check
                 G_time *= Globals::get()->GetClockInSeconds() * 1.e9; //converts clock ticks to ns
@@ -369,6 +372,7 @@ bool Anl1471Processor::Process(RawEvent &event) {
             vroot.cyc = 0;  /////////it.GetEventTime();
             vroot.bcyc = 0;  /////////itStart.GetEventTime()
             vroot.HPGE = HPGE_energy;
+            vroot.BGtime = BG_TDIFF;
             vroot.vid = barLoc;
             vroot.vtype = barType;
             vroot.bid = startLoc;
