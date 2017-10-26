@@ -882,7 +882,7 @@
       </WaveformRange>
       <DiscriminationStart unit="sample" value="3"/>
       <TrapezoidalWalk unit="ns" value="60"/>
-      <TraceDelay unit="ns" value="344"/>
+      <TraceDelay unit="ns" value="292"/>
       <TraceLength unit="ns" value="496"/>
       <QdcCompression value="4.0"/>
     </Trace>
