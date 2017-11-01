@@ -37,3 +37,6 @@ echo -e $cmd | ./utkscan -c $config_path/$config -o $output -f $firmware --frequ
 
 #To-Do/Improvements
 #option to pass config file and path, data directory and file, as well as firmware as command line argument(but this kind of defeats the purpose of having this script.
+
+#and you can kill the processes in a one liner with kill $(ps -e -o pid,uname,args | grep $USER |grep "utkscan" | grep -v grep |cut -d " " -f2)
+#you can add more specific scan selection by adding more |grep pattern's before the grep -v grep
