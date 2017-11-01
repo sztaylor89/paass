@@ -27,10 +27,17 @@ done
 
 #run scan script in each pane in each window
 tmux select-window -t $SESSION:2
-for i in {0..7}
+
+for i in 0     #used to scan first ldf with no -#
+do
+tmux select-pane -t 0
+tmux send-keys "./ScanScript_kqxhc_Parallel_firstfile.bash parallelfile $i" C-m
+done
+
+for i in {1..7}
 do
     tmux select-pane -t $i
-    tmux send-keys "./ScanScript_kqxhc_Parallel.bash parallel $i" C-m
+    tmux send-keys "./ScanScript_kqxhc_Parallel.bash parallelfile $i" C-m
 done
 
 tmux select-window -t $SESSION:3
@@ -38,7 +45,7 @@ for i in {0..7}
 do
     tmux select-pane -t $i
     let j=$i+8
-    tmux send-keys "./ScanScript_kqxhc_Parallel.bash parallel $j" C-m
+    tmux send-keys "./ScanScript_kqxhc_Parallel.bash parallelfile $j" C-m
 done
 
 

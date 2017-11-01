@@ -5,7 +5,7 @@
 #email: staylo65@vols.utk.edu
 
 #to be used with AllScan.bash
-#works with only -#.ldf 
+#works with only first .ldf 
 
 name=${1}    #output filename, reads in 1st command line argument,
 number=${2}  #number used to select ldf file, reads in second command line argument
@@ -19,7 +19,7 @@ output="$name$number" #concatenates file number to name
 
 rm -f $output.his $output.dat $output.drr $output.list $output.log $output.root    #removes files if they already exist
 
-for i in `ls -tr $data/a135feb_12-$number.ldf`   
+for i in `ls -tr $data/a135feb_12.ldf`   
 do
     cmd=$cmd"file $i\nrun\nsync\n"
 done
