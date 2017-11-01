@@ -40,6 +40,14 @@ do
     tmux send-keys "./ScanScript_kqxhc_Parallel.bash parallelfile $i" C-m
 done
 
+
+# Set default window
+tmux select-window -t $SESSION:1
+
+# Attach to session
+tmux -2 attach-session -t $SESSION
+
+
 sleep 3.5h #should allow for first half to finish before second half starts
 
 tmux select-window -t $SESSION:3
@@ -51,8 +59,4 @@ do
 done
 
 
-# Set default window
-tmux select-window -t $SESSION:1
 
-# Attach to session
-tmux -2 attach-session -t $SESSION
