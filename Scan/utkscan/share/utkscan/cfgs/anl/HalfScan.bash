@@ -1,9 +1,10 @@
 #!/bin/bash
 SESSION=135SbScanAll
 
+#need to run this from a screen session so terminal will still be usable.
+
 #create new tmux session
 tmux -2 new-session -d -s $SESSION
-
 
 #setup htop to monitor progress
 tmux select-window -t $SESSION:1
@@ -40,15 +41,11 @@ do
     tmux send-keys "./ScanScript_kqxhc_Parallel.bash parallelfile $i" C-m
 done
 
-
 # Set default window
 tmux select-window -t $SESSION:1
 
-# Attach to session
-tmux -2 attach-session -t $SESSION
 
-
-sleep 3.5h #should allow for first half to finish before second half starts
+sleep 12600 #should allow for first half to finish before second half starts, 3.5hr sleep
 
 tmux select-window -t $SESSION:3
 for i in {0..7}
@@ -59,4 +56,9 @@ do
 done
 
 
+# Set default window
+tmux select-window -t $SESSION:1
 
+
+# Attach to session
+tmux -2 attach-session -t $SESSION      #have to do this last or things won't run
