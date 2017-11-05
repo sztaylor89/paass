@@ -3,7 +3,7 @@
  * VANDLE.
  *
  *\author S. Z. Taylor
- *\date July 14, 2015
+ *\date 11/5/17
  */
 #include <fstream>
 #include <iostream>
@@ -48,6 +48,8 @@ struct VandleRoot{
     int vid;
     int vtype;
     int bid;
+    int vsize;
+    int bsize;
 
 };
 
@@ -125,7 +127,7 @@ Anl1471Processor::Anl1471Processor() : EventProcessor(OFFSET, RANGE, "Anl1471PRo
     roottree2_ = new TTree("G","");
 
     roottree1_->Branch("vandle", &vroot, "tof/D:qdc/D:snrl/D:snrr/D:pos/D:tdiff/D:ben/D:bqdcl/D:bqdcr/D:bsnrl/D:bsnrr/D:cyc/D"
-            ":bcyc/D:HPGE/D:BGtdiff/D:vid/I:vtype/I:bid/I");
+            ":bcyc/D:HPGE/D:BGtdiff/D:vid/I:vtype/I:bid/I:vsize/I:bsize/I");
     roottree1_->Branch("tape", &tapeinfo,"move/b:beam/b");
 
     roottree2_->Branch("gamma", &groot,"gen/D:gtime/D:gcyc/D:gben/D:gbtime/D:gbcyc/D:gid/I:gbid/I");
@@ -144,7 +146,8 @@ Anl1471Processor::Anl1471Processor() : EventProcessor(OFFSET, RANGE, "Anl1471PRo
     Vsize = new TH1D("Vsize","",40,0,40);
     Bsize = new TH1D("Bsize","",40,0,40);
     Gsize =new TH1D("Gsize","",40,0,40);
-    BETA = new TH2D("BETA","",8192,0,8192,64,0,64);
+    BETA = new TH2D("BETA-QDCvsSNR","",8192,0,8192,64,0,64);
+    GrowDecay = new TH2D("Gamma Single Grow/Decay","",3000,0,3000,1200,0,12);
 #endif
 }//end event processor
 
@@ -305,6 +308,24 @@ bool Anl1471Processor::Process(RawEvent &event) {
             plot(DD_DEBUGGING9, beta_start.GetLeftSide().GetTraceQdc(),
                  beta_start.GetLeftSide().GetTrace().GetSignalToNoiseRatio());
 
+            //adding cycle time stuff for vandle
+            double vcyc_time, bcyc_time, cyc_time, vtime, btime;
+            vcyc_time = bcyc_time = cyc_time = vtime = btime = -9999;
+            if (TreeCorrelator::get()->place("Cycle")->status()) {
+                cyc_time = TreeCorrelator::get()->place("Cycle")->last().time;
+                cyc_time *= (Globals::get()->GetClockInSeconds() * 1.e9);//converts from clock ticks to ns
+
+                //vandle event
+                vtime = bar.GetCorTimeAve();//in ns
+                vcyc_time = (vtime - cyc_time);//in ns
+                vcyc_time /= 1e9;//converts from ns to s
+
+                //beta event
+                btime = bar.GetCorTimeAve();//in ns
+                bcyc_time = (btime - cyc_time);//in ns
+                bcyc_time /= 1e9;//converts from ns to s
+            }
+
             //adding HPGE energy info to vandle tree
             double HPGE_energy = -9999.0;
             double BG_TDIFF = -9999.0;
@@ -317,11 +338,7 @@ bool Anl1471Processor::Process(RawEvent &event) {
                 G_time *= Globals::get()->GetClockInSeconds() * 1.e9; //converts clock ticks to ns
                 B_time = beta_start.GetCorTimeAve(); //gives result in ns
                 BG_TDIFF = G_time - B_time;
-              //cout << fixed;
-              //cout << endl<<endl<<endl<<"gg= "<< GG <<"       g= "<<G_time<<"   b= "<<B_time<< "      diff= "<< BG_TDIFF <<
-              // endl<< endl << endl;
-                if (BG_TDIFF > 0){// && BG_TDIFF < 100){ // need to figure out this upper limit if needed, toby thinks not
-                    // max would probably be about 500ns, but more likely 300ns
+                if (BG_TDIFF > 0){
                     HPGE_energy = (*itHPGE)->GetCalibratedEnergy();
                     plot (D_TEST, HPGE_energy);
                 }else {
@@ -331,30 +348,9 @@ bool Anl1471Processor::Process(RawEvent &event) {
 	    }else{ 
                 HPGE_energy = -8888.0;
 	    }
-	
-	    //Stuff to check periodic peak traces
-	    //static int trcCounter = 0;
- /*           static int ftrcCounter = 0;
-            double dammBin = (corTof * 2) + 1000;
-            //static int badTrcEvtCounter = 0;
-            if (dammBin >= 680 && dammBin <= 710) {//center at 695
-            //if (dammBin >= 1290 && dammBin <= 1320) {//center at 1305
-                for (vector<unsigned int>::const_iterator itTL = bar.GetLeftSide().GetTrace().begin();
-                     itTL != bar.GetLeftSide().GetTrace().end(); itTL++) {
-                    plot(DD_FLASHTRACES, itTL - bar.GetLeftSide().GetTrace().begin(), ftrcCounter, (*itTL));
-                }
-                for (vector<unsigned int>::const_iterator itTR = bar.GetRightSide().GetTrace().begin();
-                     itTR != bar.GetRightSide().GetTrace().end(); itTR++) {
-                    plot(DD_FLASHTRACES, itTR - bar.GetRightSide().GetTrace().begin(),
-                         ftrcCounter + 1, (*itTR));
-                }
-                ftrcCounter += 3;
 
-                plot(D_BADLOCATION, barLoc);
-                plot(D_STARTLOC,startLoc);
-                
-            }
-*/
+	
+
 
 
 #ifdef useroot
@@ -369,13 +365,16 @@ bool Anl1471Processor::Process(RawEvent &event) {
             vroot.bqdcr = beta_start.GetRightSide().GetTraceQdc();
             vroot.bsnrl = beta_start.GetLeftSide().GetTrace().GetSignalToNoiseRatio();
             vroot.bsnrr = beta_start.GetRightSide().GetTrace().GetSignalToNoiseRatio();
-            vroot.cyc = 0;  /////////it.GetEventTime();
-            vroot.bcyc = 0;  /////////itStart.GetEventTime()
+            vroot.cyc = vcyc_time;
+            vroot.bcyc = bcyc_time;
             vroot.HPGE = HPGE_energy;
             vroot.BGtime = BG_TDIFF;
             vroot.vid = barLoc;
             vroot.vtype = barType;
             vroot.bid = startLoc;
+            vroot.vsize = vbars.size();
+            vroot.bsize = betaStarts_.size();
+
 #endif
 
 
@@ -393,7 +392,7 @@ bool Anl1471Processor::Process(RawEvent &event) {
             }
             BETA->Fill(vroot.bqdcl, vroot.bsnrl);
             qdc_ = bar.GetQdc();
-            tof = tof;
+            //tof = tof;
             roottree1_->Fill();
             // bar.GetLeftSide().ZeroRootStructure(leftVandle);
             // bar.GetRightSide().ZeroRootStructure(rightVandle);
@@ -419,22 +418,21 @@ bool Anl1471Processor::Process(RawEvent &event) {
     if (geEvts.size() != 0) {
         for (vector<ChanEvent *>::const_iterator itGe = geEvts.begin();
              itGe != geEvts.end(); itGe++) {
-            double ge_energy, ge_time, gb_time_L, gb_time_R, gb_time, grow_decay_time, gb_en, gcyc_time;
-            ge_energy = ge_time = gb_time_L = gb_time_R = gb_time = grow_decay_time = gb_en = gcyc_time = -9999.0;
+            double ge_energy, ge_time, gb_time, grow_decay_time, gb_en, gcyc_time, gb_grow_decay_time;
+            ge_energy = ge_time = gb_time = grow_decay_time = gb_en = gcyc_time = gb_grow_decay_time =-9999.0;
             int ge_id = -9999;
             int gb_startLoc = -9999;
             BarDetector gb_start;
             ge_energy = (*itGe)->GetCalibratedEnergy();
             ge_id = (*itGe)->GetChanID().GetLocation();
             ge_time = (*itGe)->GetWalkCorrectedTime();
-            ge_time *= (Globals::get()->GetClockInSeconds() * 1.e9);//in ns now
+            ge_time *= (Globals::get()->GetClockInSeconds() * 1.e9);//converts from clock ticks to ns
 
             if (TreeCorrelator::get()->place("Cycle")->status()) {
                 gcyc_time = TreeCorrelator::get()->place("Cycle")->last().time;
-                gcyc_time *= (Globals::get()->GetClockInSeconds() *
-                              1.e9);//in ns now
-                grow_decay_time =
-                        (ge_time - gcyc_time) * 1e-9 * 1e2;//in seconds, then ms
+                gcyc_time *= (Globals::get()->GetClockInSeconds() * 1.e9);//converts from clock ticks to ns
+                grow_decay_time = (ge_time - gcyc_time);//in ns
+                grow_decay_time /= 1e9;//converts from ns to s
                 //cout << ge_energy << endl << grow_decay_time << endl << endl;
                 plot(DD_grow_decay, ge_energy, grow_decay_time);
             }
@@ -445,11 +443,8 @@ bool Anl1471Processor::Process(RawEvent &event) {
                     gb_start = (*itGB).second;
                     gb_startLoc = (*itGB).first.first;
                     gb_en = gb_start.GetQdc();
-                    gb_time_L = gb_start.GetLeftSide().GetHighResTimeInNs();//GetCorrectedTime()??
-                    gb_time_R = gb_start.GetRightSide().GetHighResTimeInNs();//GetTimeAverage()??
-                    gb_time = (gb_time_L + gb_time_R) / 2;
-                    gb_time *= (Globals::get()->GetClockInSeconds() *
-                                1.e9);//in ns now
+                    gb_grow_decay_time = (ge_time - gcyc_time);//in ns
+                    gb_grow_decay_time /= 1e9;//converts from ns to s
                 }
             } else {
                 gb_startLoc = -9999;
@@ -457,19 +452,19 @@ bool Anl1471Processor::Process(RawEvent &event) {
                 gb_time = -9999;
             }
 
-
 #ifdef useroot
             groot.gen = ge_energy;
             groot.gtime = ge_time;
-            groot.gcyc = ge_time - gcyc_time;
+            groot.gcyc = grow_decay_time;
             groot.gben = gb_en;
             groot.gbtime = gb_time;
-            groot.gbcyc = gb_time - gcyc_time;
+            groot.gbcyc = gb_grow_decay_time;
             groot.gid = ge_id;
             groot.gbid = gb_startLoc;
 
             roottree2_->Fill();
             GAMMA_SINGLES->Fill(ge_energy);
+            GrowDecay->Fill(ge_energy,grow_decay_time);
             if (doubleBetaStarts.size() != 0) {
                 BETA_GATED_GAMMA->Fill(ge_energy);
             }

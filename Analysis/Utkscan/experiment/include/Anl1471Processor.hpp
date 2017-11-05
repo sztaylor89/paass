@@ -66,6 +66,7 @@ private:
     TH1D *Bsize;
     TH1D *Gsize;
     TH2D *BETA;
+    TH2D *GrowDecay;
     static double qdc_, tof;
     //static double ge_, GamEn;
     //static double vandle_, VID, SNRVL, SNRVR, QDCVL, QDCVR;
