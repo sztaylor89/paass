@@ -61,7 +61,7 @@ struct TapeInfo{
 struct GammaRoot{
     double gen;
     double gtime;
-    double gcyc;//might be repetative with gtime?
+    double gcyc;
     double gben;
     double gbtime;
     double gbcyc;
@@ -147,7 +147,9 @@ Anl1471Processor::Anl1471Processor() : EventProcessor(OFFSET, RANGE, "Anl1471PRo
     Bsize = new TH1D("Bsize","",40,0,40);
     Gsize =new TH1D("Gsize","",40,0,40);
     BETA = new TH2D("BETA-QDCvsSNR","",8192,0,8192,64,0,64);
-    GrowDecay = new TH2D("Gamma Single Grow/Decay","",3000,0,3000,1200,0,12);
+    GammaGrowDecay = new TH2D("Beta gated Gamma Grow/Decay","",3000,0,3000,1200,0,12);
+    BetaGrowDecay = new TH2D("Beta Grow/Decay","",25000,0,25000,1200,0,12);
+    NeutronGrowDecay = new TH2D("Neutron Grow/Decay","",25000,0,25000,1200,0,12);
 #endif
 }//end event processor
 
@@ -391,6 +393,8 @@ bool Anl1471Processor::Process(RawEvent &event) {
                 BARvsCORTOF_Small->Fill(corTof, barLoc);
             }
             BETA->Fill(vroot.bqdcl, vroot.bsnrl);
+            BetaGrowDecay->Fill(beta_start.GetQdc(),bcyc_time);
+            NeutronGrowDecay->Fill(bar.GetQdc(),vcyc_time);
             qdc_ = bar.GetQdc();
             //tof = tof;
             roottree1_->Fill();
@@ -434,7 +438,7 @@ bool Anl1471Processor::Process(RawEvent &event) {
                 grow_decay_time = (ge_time - gcyc_time);//in ns
                 grow_decay_time /= 1e9;//converts from ns to s
                 //cout << ge_energy << endl << grow_decay_time << endl << endl;
-                plot(DD_grow_decay, ge_energy, grow_decay_time);
+                //plot(DD_grow_decay, ge_energy, grow_decay_time);
             }
 
             if (doubleBetaStarts.size() != 0) {
@@ -464,9 +468,11 @@ bool Anl1471Processor::Process(RawEvent &event) {
 
             roottree2_->Fill();
             GAMMA_SINGLES->Fill(ge_energy);
-            GrowDecay->Fill(ge_energy,grow_decay_time);
+	    //            GrowDecay->Fill(ge_energy,grow_decay_time);
             if (doubleBetaStarts.size() != 0) {
                 BETA_GATED_GAMMA->Fill(ge_energy);
+                GammaGrowDecay->Fill(ge_energy,grow_decay_time);
+                plot(DD_grow_decay, ge_energy, grow_decay_time);
             }
 #endif
         }
