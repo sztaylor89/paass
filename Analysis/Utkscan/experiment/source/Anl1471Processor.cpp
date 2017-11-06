@@ -67,6 +67,8 @@ struct GammaRoot{
     double gbcyc;
     int gid;
     int gbid;
+    int gsize;
+    int bsize;
 };
 
 TapeInfo tapeinfo;
@@ -130,7 +132,7 @@ Anl1471Processor::Anl1471Processor() : EventProcessor(OFFSET, RANGE, "Anl1471PRo
             ":bcyc/D:HPGE/D:BGtdiff/D:vid/I:vtype/I:bid/I:vsize/I:bsize/I");
     roottree1_->Branch("tape", &tapeinfo,"move/b:beam/b");
 
-    roottree2_->Branch("gamma", &groot,"gen/D:gtime/D:gcyc/D:gben/D:gbtime/D:gbcyc/D:gid/I:gbid/I");
+    roottree2_->Branch("gamma", &groot,"gen/D:gtime/D:gcyc/D:gben/D:gbtime/D:gbcyc/D:gid/I:gbid/I:gsize/I:bsize/I");
     roottree2_->Branch("tape", &tapeinfo,"move/b:beam/b");
 
     QDCvsCORTOF_Medium = new TH2D("MED-QDC vs CorTof","",1100,-100,1000,25000,0,25000);
@@ -465,6 +467,8 @@ bool Anl1471Processor::Process(RawEvent &event) {
             groot.gbcyc = gb_grow_decay_time;
             groot.gid = ge_id;
             groot.gbid = gb_startLoc;
+            groot.gsize = geEvts.size();
+            groot.bsize = betaStarts_.size();
 
             roottree2_->Fill();
             GAMMA_SINGLES->Fill(ge_energy);
