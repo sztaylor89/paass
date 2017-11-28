@@ -325,7 +325,7 @@ bool Anl1471Processor::Process(RawEvent &event) {
                 vcyc_time /= 1e9;//converts from ns to s
 
                 //beta event
-                btime = bar.GetCorTimeAve();//in ns
+                btime = beta_start.GetCorTimeAve();//in ns
                 bcyc_time = (btime - cyc_time);//in ns
                 bcyc_time /= 1e9;//converts from ns to s
             }
@@ -449,13 +449,14 @@ bool Anl1471Processor::Process(RawEvent &event) {
                     gb_start = (*itGB).second;
                     gb_startLoc = (*itGB).first.first;
                     gb_en = gb_start.GetQdc();
-                    gb_grow_decay_time = (ge_time - gcyc_time);//in ns
+                    gb_time = gb_start.GetCorTimeAve();//in ns
+                    gb_grow_decay_time = (gb_time - gcyc_time);//in ns
                     gb_grow_decay_time /= 1e9;//converts from ns to s
                 }
             } else {
-                gb_startLoc = -9999;
-                gb_en = -9999;
-                gb_time = -9999;
+                gb_startLoc = -8888;
+                gb_en = -8888;
+                gb_time = -8888;
             }
 
 #ifdef useroot
