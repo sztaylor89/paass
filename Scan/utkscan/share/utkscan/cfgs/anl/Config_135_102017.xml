@@ -46,7 +46,7 @@
                types="small,medium" res="2" offset="1000" NumStarts="4"/>
   </DetectorDriver>
 
-  <Map verbose_calibration="False" verbose_map="False" verbose_walk="False">
+  <Map verbose_calibration="True" verbose_map="True" verbose_walk="True">
   
 <!--energy as start-->
 <!--
