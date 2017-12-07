@@ -48,6 +48,7 @@ struct VandleRoot{
     int vid;
     int vtype;
     int bid;
+    int gid;
     int vsize;
     int bsize;
 
@@ -129,7 +130,7 @@ Anl1471Processor::Anl1471Processor() : EventProcessor(OFFSET, RANGE, "Anl1471PRo
     roottree2_ = new TTree("G","");
 
     roottree1_->Branch("vandle", &vroot, "tof/D:qdc/D:snrl/D:snrr/D:pos/D:tdiff/D:ben/D:bqdcl/D:bqdcr/D:bsnrl/D:bsnrr/D:cyc/D"
-            ":bcyc/D:HPGE/D:BGtdiff/D:vid/I:vtype/I:bid/I:vsize/I:bsize/I");
+            ":bcyc/D:HPGE/D:BGtdiff/D:vid/I:vtype/I:bid/I:gid/I:vsize/I:bsize/I");
     roottree1_->Branch("tape", &tapeinfo,"move/b:beam/b");
 
     roottree2_->Branch("gamma", &groot,"gen/D:gtime/D:gcyc/D:gben/D:gbtime/D:gbcyc/D:gid/I:gbid/I:gsize/I:bsize/I");
@@ -333,10 +334,12 @@ bool Anl1471Processor::Process(RawEvent &event) {
             //adding HPGE energy info to vandle tree
             double HPGE_energy = -9999.0;
             double BG_TDIFF = -9999.0;
+            int gamma_id=-9999;
             if (geEvts.size() != 0) {
 	      for (vector<ChanEvent *>::const_iterator itHPGE = geEvts.begin();
-		   itHPGE != geEvts.end(); itHPGE++){ 
+		   itHPGE != geEvts.end(); itHPGE++){
                 double B_time, G_time;
+                gamma_id = (*itHPGE)->GetChanID().GetLocation();
                 G_time = (*itHPGE)->GetTimeSansCfd();//gives result in clock ticks
                 //double GG = (*itHPGE)->GetTimeSansCfd();// used as check
                 G_time *= Globals::get()->GetClockInSeconds() * 1.e9; //converts clock ticks to ns
@@ -347,10 +350,12 @@ bool Anl1471Processor::Process(RawEvent &event) {
                     plot (D_TEST, HPGE_energy);
                 }else {
                     HPGE_energy = -7777.0;
+                    gamma_id = -7777;
                 }
           }
 	    }else{ 
                 HPGE_energy = -8888.0;
+                gamma_id=-8888;
 	    }
 
 	
@@ -376,6 +381,7 @@ bool Anl1471Processor::Process(RawEvent &event) {
             vroot.vid = barLoc;
             vroot.vtype = barType;
             vroot.bid = startLoc;
+            vroot.gid = gamma_id;
             vroot.vsize = vbars.size();
             vroot.bsize = betaStarts_.size();
 
