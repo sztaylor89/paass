@@ -29,28 +29,33 @@ double Anl1471Processor::tof;
 
 unsigned int barType;
 
+struct Hpge_Struct{
+    double ge_energy = -9998;
+    double ge_time = -9998;
+    double ge_beta_tdiff = -9998;
+    double ge_id = -9998;
+};
+
 struct VandleRoot{
-    double tof;
-    double qdc;
-    double snrl;
-    double snrr;
-    double pos;
-    double tdiff;
-    double ben;
-    double bqdcl;
-    double bqdcr;
-    double bsnrl;
-    double bsnrr;
-    double cyc;
-    double bcyc;
-    double HPGE;
-    double BGtime;
-    int vid;
-    int vtype;
-    int bid;
-    int gid;
-    int vsize;
-    int bsize;
+    double tof = -9998;
+    double qdc = -9998;
+    double snrl = -9998;
+    double snrr = -9998;
+    double pos = -9998;
+    double tdiff = -9998;
+    double ben = -9998;
+    double bqdcl = -9998;
+    double bqdcr = -9998;
+    double bsnrl = -9998;
+    double bsnrr = -9998;
+    double cyc = -9998;
+    double bcyc = -9998;
+    std::vector<Hpge_Struct> HPGE;
+    int vid = -9998;
+    int vtype = -9998;
+    int bid = -9998;
+    int vsize = -9998;
+    int bsize = -9998;
 
 };
 
@@ -60,21 +65,22 @@ struct TapeInfo{
 };
 
 struct GammaRoot{
-    double gen;
-    double gtime;
-    double gcyc;
-    double gben;
-    double gbtime;
-    double gbcyc;
-    int gid;
-    int gbid;
-    int gsize;
-    int bsize;
+    double gen = -9998;
+    double gtime = -9998;
+    double gcyc = -9998;
+    double gben = -9998;
+    double gbtime = -9998;
+    double gbcyc = -9998;
+    int gid = -9998;
+    int gbid = -9998;
+    int gsize = -9998;
+    int bsize = -9998;
 };
 
 TapeInfo tapeinfo;
 VandleRoot vroot;
 GammaRoot groot;
+Hpge_Struct vangaminfo;
 
 namespace dammIds {
     namespace experiment {
@@ -88,9 +94,9 @@ namespace dammIds {
         const int DD_SmCTOFvQDC  = 7;
         const int DD_SmVetoed  = 8;
         const int DD_DEBUGGING9  = 9;
-	const int D_tape = 10;
-	const int D_beam = 11;
-	const int DD_grow_decay = 12;
+        const int D_tape = 10;
+        const int D_beam = 11;
+        const int DD_grow_decay = 12;
     }
 }//namespace dammIds
 
@@ -130,7 +136,7 @@ Anl1471Processor::Anl1471Processor() : EventProcessor(OFFSET, RANGE, "Anl1471PRo
     roottree2_ = new TTree("G","");
 
     roottree1_->Branch("vandle", &vroot, "tof/D:qdc/D:snrl/D:snrr/D:pos/D:tdiff/D:ben/D:bqdcl/D:bqdcr/D:bsnrl/D:bsnrr/D:cyc/D"
-            ":bcyc/D:HPGE/D:BGtdiff/D:vid/I:vtype/I:bid/I:gid/I:vsize/I:bsize/I");
+            ":bcyc/D:HPGE/D:vid/I:vtype/I:bid/I:vsize/I:bsize/I");
     roottree1_->Branch("tape", &tapeinfo,"move/b:beam/b");
 
     roottree2_->Branch("gamma", &groot,"gen/D:gtime/D:gcyc/D:gben/D:gbtime/D:gbcyc/D:gid/I:gbid/I:gsize/I:bsize/I");
@@ -332,33 +338,23 @@ bool Anl1471Processor::Process(RawEvent &event) {
             }
 
             //adding HPGE energy info to vandle tree
-            double HPGE_energy = -9999.0;
-            double BG_TDIFF = -9999.0;
-            int gamma_id=-9999;
             if (geEvts.size() != 0) {
-	      for (vector<ChanEvent *>::const_iterator itHPGE = geEvts.begin();
-		   itHPGE != geEvts.end(); itHPGE++){
-                double B_time, G_time;
-                gamma_id = (*itHPGE)->GetChanID().GetLocation();
-                G_time = (*itHPGE)->GetTimeSansCfd();//gives result in clock ticks
-                //double GG = (*itHPGE)->GetTimeSansCfd();// used as check
-                G_time *= Globals::get()->GetClockInSeconds() * 1.e9; //converts clock ticks to ns
-                B_time = beta_start.GetCorTimeAve(); //gives result in ns
-                BG_TDIFF = G_time - B_time;
-                if (BG_TDIFF > 0){
-                    HPGE_energy = (*itHPGE)->GetCalibratedEnergy();
-                    plot (D_TEST, HPGE_energy);
-                }else {
-                    HPGE_energy = -7777.0;
-                    gamma_id = -7777;
+                for (vector<ChanEvent *>::const_iterator itHPGE = geEvts.begin();
+                     itHPGE != geEvts.end(); itHPGE++){
+                    double B_time, G_time;
+                    vangaminfo.ge_id = (*itHPGE)->GetChanID().GetLocation();
+                    G_time = (*itHPGE)->GetTimeSansCfd();//gives result in clock ticks
+                    //double GG = (*itHPGE)->GetTimeSansCfd();// used as check
+                    G_time *= Globals::get()->GetClockInSeconds() * 1.e9; //converts clock ticks to ns
+                    B_time = beta_start.GetCorTimeAve(); //gives result in ns
+                    vangaminfo.ge_beta_tdiff = G_time - B_time;
+                    vangaminfo.ge_time=G_time;
+                    vangaminfo.ge_energy = (*itHPGE)->GetCalibratedEnergy();
+                    vroot.HPGE.emplace_back(vangaminfo);
                 }
-          }
-	    }else{ 
-                HPGE_energy = -8888.0;
-                gamma_id=-8888;
-	    }
+            }
 
-	
+
 
 
 
@@ -376,12 +372,10 @@ bool Anl1471Processor::Process(RawEvent &event) {
             vroot.bsnrr = beta_start.GetRightSide().GetTrace().GetSignalToNoiseRatio();
             vroot.cyc = vcyc_time;
             vroot.bcyc = bcyc_time;
-            vroot.HPGE = HPGE_energy;
-            vroot.BGtime = BG_TDIFF;
+            //vroot.HPGE = vangaminfo;  May not need this, emplace may fill this above.
             vroot.vid = barLoc;
             vroot.vtype = barType;
             vroot.bid = startLoc;
-            vroot.gid = gamma_id;
             vroot.vsize = vbars.size();
             vroot.bsize = betaStarts_.size();
 
@@ -406,6 +400,13 @@ bool Anl1471Processor::Process(RawEvent &event) {
             qdc_ = bar.GetQdc();
             //tof = tof;
             roottree1_->Fill();
+
+            //clear vector and "zero" structure for gamma stuff
+            vroot.HPGE.clear();
+            vangaminfo.ge_beta_tdiff=-9999;
+            vangaminfo.ge_energy=-9999;
+            vangaminfo.ge_id=-9999;
+            vangaminfo.ge_time=-9999;
             // bar.GetLeftSide().ZeroRootStructure(leftVandle);
             // bar.GetRightSide().ZeroRootStructure(rightVandle);
             // beta_start.GetLeftSide().ZeroRootStructure(leftBeta);
@@ -415,7 +416,7 @@ bool Anl1471Processor::Process(RawEvent &event) {
             //GamEn = SNRBL = SNRBR = vandle_ = beta_ = ge_ = -9999;
 #endif
 
-	    //            plot(DD_DEBUGGING1, tof * plotMult_ + plotOffset_, bar.GetQdc());
+            //            plot(DD_DEBUGGING1, tof * plotMult_ + plotOffset_, bar.GetQdc());
 
         } // for(TimingMap::iterator itStart
     } //(BarMap::iterator itBar
@@ -479,7 +480,7 @@ bool Anl1471Processor::Process(RawEvent &event) {
 
             roottree2_->Fill();
             GAMMA_SINGLES->Fill(ge_energy);
-	    //            GrowDecay->Fill(ge_energy,grow_decay_time);
+            //            GrowDecay->Fill(ge_energy,grow_decay_time);
             if (doubleBetaStarts.size() != 0) {
                 BETA_GATED_GAMMA->Fill(ge_energy);
                 GammaGrowDecay->Fill(ge_energy,grow_decay_time);
@@ -489,8 +490,7 @@ bool Anl1471Processor::Process(RawEvent &event) {
         }
     }
 
-   
-   EndProcess();
+
+    EndProcess();
     return(true);
 }
-
