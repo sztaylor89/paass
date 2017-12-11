@@ -37,6 +37,7 @@ struct Hpge_Struct{
 };
 
 struct VandleRoot{
+    std::vector<Hpge_Struct> HPGE;
     double tof = -9998;
     double qdc = -9998;
     double snrl = -9998;
@@ -50,7 +51,6 @@ struct VandleRoot{
     double bsnrr = -9998;
     double cyc = -9998;
     double bcyc = -9998;
-    std::vector<Hpge_Struct> HPGE;
     int vid = -9998;
     int vtype = -9998;
     int bid = -9998;
@@ -135,8 +135,8 @@ Anl1471Processor::Anl1471Processor() : EventProcessor(OFFSET, RANGE, "Anl1471PRo
     roottree1_ = new TTree("V","");
     roottree2_ = new TTree("G","");
 
-    roottree1_->Branch("vandle", &vroot, "tof/D:qdc/D:snrl/D:snrr/D:pos/D:tdiff/D:ben/D:bqdcl/D:bqdcr/D:bsnrl/D:bsnrr/D:cyc/D"
-            ":bcyc/D:HPGE/D:vid/I:vtype/I:bid/I:vsize/I:bsize/I");
+    roottree1_->Branch("vandle", &vroot, "HPGE/D:tof/D:qdc/D:snrl/D:snrr/D:pos/D:tdiff/D:ben/D:bqdcl/D:bqdcr/D:bsnrl/D:bsnrr/D:cyc/D"
+            ":bcyc/D:vid/I:vtype/I:bid/I:vsize/I:bsize/I");
     roottree1_->Branch("tape", &tapeinfo,"move/b:beam/b");
 
     roottree2_->Branch("gamma", &groot,"gen/D:gtime/D:gcyc/D:gben/D:gbtime/D:gbcyc/D:gid/I:gbid/I:gsize/I:bsize/I");
