@@ -402,6 +402,13 @@ bool Anl1471Processor::Process(RawEvent &event) {
             qdc_ = bar.GetQdc();
             //tof = tof;
             roottree1_->Fill();
+
+            //clear vectors
+            vroot.ge_energy.clear();
+            vroot.ge_time.clear();
+            vroot.ge_id.clear();
+            vroot.ge_bgtdiff.clear();
+
             // bar.GetLeftSide().ZeroRootStructure(leftVandle);
             // bar.GetRightSide().ZeroRootStructure(rightVandle);
             // beta_start.GetLeftSide().ZeroRootStructure(leftBeta);
