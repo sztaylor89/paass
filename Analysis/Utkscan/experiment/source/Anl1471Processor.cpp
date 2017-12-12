@@ -33,7 +33,6 @@ struct VandleRoot{
     std::vector<double> ge_energy;
     std::vector<double> ge_time;
     std::vector<double> ge_bgtdiff;
-    std::vector<int> ge_id;
     double tof;
     double qdc;
     double snrl;
@@ -47,6 +46,7 @@ struct VandleRoot{
     double bsnrr;
     double cyc;
     double bcyc;
+    std::vector<int> ge_id;
     int vid;
     int vtype;
     int bid;
@@ -130,7 +130,8 @@ Anl1471Processor::Anl1471Processor() : EventProcessor(OFFSET, RANGE, "Anl1471PRo
     roottree1_ = new TTree("V","");
     roottree2_ = new TTree("G","");
 
-    roottree1_->Branch("vandle", &vroot, "ge_energy:ge_time:ge_bgtdiff:ge_id:tof/D:qdc/D:snrl/D:snrr/D:pos/D:tdiff/D:ben/D:bqdcl/D:bqdcr/D:bsnrl/D:bsnrr/D:cyc/D:bcyc/D:BGtdiff/D:vid/I:vtype/I:bid/I:gid/I:vsize/I:bsize/I");
+    roottree1_->Branch("vandle", &vroot, "ge_energy:ge_time:ge_bgtdiff:tof/D:qdc/D:snrl/D:snrr/D:pos/D:tdiff/D:ben/D:bqdcl/D"
+            ":bqdcr/D:bsnrl/D:bsnrr/D:cyc/D:bcyc/D:BGtdiff/D:ge_id:vid/I:vtype/I:bid/I:gid/I:vsize/I:bsize/I");
     roottree1_->Branch("tape", &tapeinfo,"move/b:beam/b");
 
     roottree2_->Branch("gamma", &groot,"gen/D:gtime/D:gcyc/D:gben/D:gbtime/D:gbcyc/D:gid/I:gbid/I:gsize/I:bsize/I");
@@ -355,6 +356,11 @@ bool Anl1471Processor::Process(RawEvent &event) {
                     vroot.ge_bgtdiff.emplace_back(BG_time);
                     vroot.ge_id.emplace_back(gamma_id);
                 }
+            }else{
+                vroot.ge_energy.emplace_back(-10000);
+                vroot.ge_time.emplace_back(-10000);
+                vroot.ge_bgtdiff.emplace_back(-10000);
+                vroot.ge_id.emplace_back(-10000);
             }
 
 
