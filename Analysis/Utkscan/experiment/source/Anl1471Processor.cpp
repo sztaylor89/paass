@@ -1,13 +1,11 @@
 /** \file Anl1471Processor.cpp
- * \brief A class to process data from ANL1471 experiment using
- * VANDLE.
- *
+ * \brief A class to process data from ANL1471 experiment using VANDLE.
+ * \brief This class creates 2 root trees, one for neutron based events and the other for gamma based events.
  *\author S. Z. Taylor
  *\date 11/5/17
  */
 #include <fstream>
 #include <iostream>
-
 #include <cmath>
 
 #include "BarBuilder.hpp"
@@ -15,94 +13,86 @@
 #include "DoubleBetaProcessor.hpp"
 #include "DetectorDriver.hpp"
 #include "GeProcessor.hpp"
-//#include "GetArguments.hpp"
-#include "Globals.hpp"
 #include "Anl1471Processor.hpp"
-#include "RawEvent.hpp"
-#include "TimingMapBuilder.hpp"
 #include "VandleProcessor.hpp"
-#include "HighResTimingData.hpp"
 
-double Anl1471Processor::qdc_;
-double Anl1471Processor::tof;
+//double Anl1471Processor::tof;
 
 
-unsigned int barType;
+//neutron related variables
+std::vector<double> tof;//time of flight
+std::vector<double> qdc;//vandle vbarenergy/qdc
+std::vector<double> snrl;//vandle signal to noise ratio left
+std::vector<double> snrr;//vandle signal to noise ratio right
+std::vector<double> pos;//position in bar
+std::vector<double> tdiff;//time difference between vandle bar ends
+std::vector<double> ben;//beta bar energy/qdc
+std::vector<double> bqdcl;//beta qdc left
+std::vector<double> bqdcr;//beta qdc right
+std::vector<double> bsnrl;// beta signal to noise ratio left
+std::vector<double> bsnrr;//beta signal to noise ratio right
+std::vector<double> cyc;//vandle event time in reference to start of cycle
+std::vector<double> bcyc;//beta event time in reference to  start of cycle
+std::vector<double> gen;//gamma energy
+std::vector<double> Vtime;//vandle event time
+std::vector<double> Gtime;//gamma event time
+std::vector<double> Btime;//beta event time
+std::vector<double> BGtime;//time difference between beta and gamma events
+std::vector<int> vid;//vandle bar id
+std::vector<int> vtype;//vandle bar type, 0=small, 1=medium
+std::vector<int> bid;//beta bar id
+std::vector<int> gid;//hpge clover leaf id
+std::vector<int> vsize;//size of vandle event
+std::vector<int> gsize;//size of gamma event
+std::vector<int> bsize;//size of beta event
 
-struct VandleRoot{
-    double tof;
-    double qdc;
-    double snrl;
-    double snrr;
-    double pos;
-    double tdiff;
-    double ben;
-    double bqdcl;
-    double bqdcr;
-    double bsnrl;
-    double bsnrr;
-    double cyc;
-    double bcyc;
-    double HPGE;
-    double BGtime;
-    int vid;
-    int vtype;
-    int bid;
-    int gid;
-    int vsize;
-    int bsize;
+//tape related variables
+std::vector<bool> move;//moving tape collector moving/stationary   0=stopped, 1=moving
+std::vector<bool> beam;//beam on/off    0=off, 1=on
 
-};
+//gamma singles variables, keeping separate vectors to avoid confusion from similar ones in neutron variables
+std::vector<double> g_en;//gamma energy
+std::vector<double> g_time;//gamma event time
+std::vector<double> g_cyc;//gamma event time in reference to start of cycle
+std::vector<double> g_ben;//beta energy
+std::vector<double> g_btime;//beta event time
+std::vector<double> g_bcyc;//beta event time in reference to start of cycle
+std::vector<int> g_id;//hpge clover leaf id
+std::vector<int> g_bid;//beta bar id
+std::vector<int> g_size;//size of gamma event
+std::vector<int> g_bsize;//size of beta event
 
-struct TapeInfo{
-    bool move;
-    bool beam;
-};
-
-struct GammaRoot{
-    double gen;
-    double gtime;
-    double gcyc;
-    double gben;
-    double gbtime;
-    double gbcyc;
-    int gid;
-    int gbid;
-    int gsize;
-    int bsize;
-};
-
-TapeInfo tapeinfo;
-VandleRoot vroot;
-GammaRoot groot;
-
+//assigning damm histogram id's,    Starts at 6050
 namespace dammIds {
     namespace experiment {
-        const int DD_TRACES  = 0;
+     /*   const int DD_TRACES  = 0;
         const int D_TEST  = 1;
         const int D_BADLOCATION  = 2;
         const int D_STARTLOC  = 3;
+        */
         const int DD_DEBUGGING4  = 4;
         const int DD_MedCTOFvQDC  = 5;
         const int DD_MedVetoed  = 6;
         const int DD_SmCTOFvQDC  = 7;
         const int DD_SmVetoed  = 8;
         const int DD_DEBUGGING9  = 9;
-	const int D_tape = 10;
-	const int D_beam = 11;
-	const int DD_grow_decay = 12;
+        const int D_tape = 10;
+        const int D_beam = 11;
+        const int DD_grow_decay = 12;
     }
 }//namespace dammIds
 
 using namespace std;
 using namespace dammIds::experiment;
 
-void Anl1471Processor::DeclarePlots(void) {
-    DeclareHistogram2D(DD_TRACES, S8, SE, "traces");
+//declaring damm plots
+void Anl1471Processor::DeclarePlots() {
+/*    DeclareHistogram2D(DD_TRACES, S8, SE, "traces");
     DeclareHistogram1D(D_TEST, SD, "beta gamma neutron test hist");
     DeclareHistogram1D(D_BADLOCATION, S6, "'bad' trace bar location");
     DeclareHistogram1D(D_STARTLOC, SB, "Detector Referenced as Start for vandle");
     DeclareHistogram1D(DD_DEBUGGING4, S7, "Beta Multiplicity");
+*/
     DeclareHistogram2D(DD_MedCTOFvQDC, SC, SD, "ANL-medium-<E>-vs-CorTof");
     DeclareHistogram2D(DD_MedVetoed, SC, SD, "ANL-medium-vetoed");
     DeclareHistogram2D(DD_SmCTOFvQDC, SC, SD, "ANL-small-<E>-vs-CorTof");
@@ -114,38 +104,78 @@ void Anl1471Processor::DeclarePlots(void) {
 }//end declare plots
 
 
-
+//gathering detector types
 Anl1471Processor::Anl1471Processor() : EventProcessor(OFFSET, RANGE, "Anl1471PRocessor") {
     associatedTypes.insert("vandle");
     associatedTypes.insert("beta");
     associatedTypes.insert("ge");
 
+    //automatically creating root file with same name as damm output
 #ifdef useroot
     stringstream name;
     name << Globals::get()->GetOutputPath()
          << Globals::get()->GetOutputFileName() << ".root";
     rootfile_ = new TFile(name.str().c_str(), "RECREATE");
 
-    roottree1_ = new TTree("V","");
-    roottree2_ = new TTree("G","");
+    //creating 2 root trees, one based of of neutron events(b-n and b-n-y), the other off of gamma events(y singles and b-y)
+    roottree1_ = new TTree("V","Tree with neutron related events");
+    roottree2_ = new TTree("G","Tree with gamma related events");
 
-    roottree1_->Branch("vandle", &vroot, "tof/D:qdc/D:snrl/D:snrr/D:pos/D:tdiff/D:ben/D:bqdcl/D:bqdcr/D:bsnrl/D:bsnrr/D:cyc/D"
-            ":bcyc/D:HPGE/D:BGtdiff/D:vid/I:vtype/I:bid/I:gid/I:vsize/I:bsize/I");
-    roottree1_->Branch("tape", &tapeinfo,"move/b:beam/b");
+    //defining branches for each vector variable
+    //neutron based
+    roottree1_->Branch("tof",&tof);
+    roottree1_->Branch("qdc",&qdc);
+    roottree1_->Branch("snrl",&snrl);
+    roottree1_->Branch("snrr",&snrr);
+    roottree1_->Branch("pos",&pos);
+    roottree1_->Branch("tdiff",&tdiff);
+    roottree1_->Branch("ben",&ben);
+    roottree1_->Branch("bqdcl",&bqdcl);
+    roottree1_->Branch("bqdcr",&bqdcr);
+    roottree1_->Branch("bsnrl",&bsnrl);
+    roottree1_->Branch("bsnrr",&bsnrr);
+    roottree1_->Branch("cyc",&cyc);
+    roottree1_->Branch("bcyc",&bcyc);
+    roottree1_->Branch("gen",&gen);
+    roottree1_->Branch("Vtime",&Vtime);
+    roottree1_->Branch("Gtime",&Gtime);
+    roottree1_->Branch("Btime",&Btime);
+    roottree1_->Branch("BGtime",&BGtime);
+    roottree1_->Branch("vid",&vid);
+    roottree1_->Branch("vtype",&vtype);
+    roottree1_->Branch("bid",&bid);
+    roottree1_->Branch("gid",&gid);
+    roottree1_->Branch("vsize",&vsize);
+    roottree1_->Branch("gsize",&gsize);
+    roottree1_->Branch("bsize",&bsize);
+    roottree1_->Branch("move",&move);
+    roottree1_->Branch("beam",&beam);
 
-    roottree2_->Branch("gamma", &groot,"gen/D:gtime/D:gcyc/D:gben/D:gbtime/D:gbcyc/D:gid/I:gbid/I:gsize/I:bsize/I");
-    roottree2_->Branch("tape", &tapeinfo,"move/b:beam/b");
+    //gamma based
+    roottree2_->Branch("g_en",&g_en);
+    roottree2_->Branch("g_time",&g_time);
+    roottree2_->Branch("g_cyc",&g_cyc);
+    roottree2_->Branch("g_ben",&g_ben);
+    roottree2_->Branch("g_btime",&g_btime);
+    roottree2_->Branch("g_bcyc",&g_bcyc);
+    roottree2_->Branch("g_id",&g_id);
+    roottree2_->Branch("g_bid",&g_bid);
+    roottree2_->Branch("g_size",&g_size);
+    roottree2_->Branch("g_bsize",&g_bsize);
+    roottree2_->Branch("move",&move);
+    roottree2_->Branch("beam",&beam);
 
+    //pre-making some frequently used histograms in root
     QDCvsCORTOF_Medium = new TH2D("MED-QDC vs CorTof","",1100,-100,1000,25000,0,25000);
     BARvsQDC_Medium = new TH2D("MED-Bar vs QDC","",25100,-100,25000,25,0,25);
-    BARvsTDIFF_Medium = new TH2D("MED-Bar vs TDIFF","",1500,-750,750,25,0,25);
+    BARvsTDIFF_Medium = new TH2D("MED-Bar vs TDIFF","",200,-25,25,25,0,25);
     BARvsCORTOF_Medium = new TH2D("MED-Bar vs CorTof","",1100,-100,1000,25,0,25);
     QDCvsCORTOF_Small = new TH2D("SM-QDC vs CorTof","",1100,-100,1000,25000,0,25000);
     BARvsQDC_Small = new TH2D("SM-Bar vs QDC","",25100,-100,25000,25,0,25);
-    BARvsTDIFF_Small = new TH2D("SM-Bar vs TDIFF","",1500,-750,750,25,0,25);
+    BARvsTDIFF_Small = new TH2D("SM-Bar vs TDIFF","",200,-25,25,25,0,25);
     BARvsCORTOF_Small = new TH2D("SM-Bar vs CorTof","",1100,-100,1000,25,0,25);
     GAMMA_SINGLES = new TH1D("Gamma Singles","",3100,-100,3000);
-    BETA_GATED_GAMMA = new TH1D("Betad Gated Gamma","",3100,-100,3000);
+    BETA_GATED_GAMMA = new TH1D("Beta Gated Gamma","",3100,-100,3000);
     Vsize = new TH1D("Vsize","",40,0,40);
     Bsize = new TH1D("Bsize","",40,0,40);
     Gsize =new TH1D("Gsize","",40,0,40);
@@ -156,10 +186,6 @@ Anl1471Processor::Anl1471Processor() : EventProcessor(OFFSET, RANGE, "Anl1471PRo
 #endif
 }//end event processor
 
-
-
-
-
 //Destructor closes/writes files and class
 Anl1471Processor::~Anl1471Processor() {
 #ifdef useroot
@@ -169,51 +195,29 @@ Anl1471Processor::~Anl1471Processor() {
 #endif
 }//end destructor
 
-
-
-//where everything is done
+//process where all calculations and filling occurs
 bool Anl1471Processor::Process(RawEvent &event) {
     if (!EventProcessor::Process(event))
         return (false);
-    //double plotMult_ = 2;
-    //double plotOffset_ = 1000;
 
-    BarMap vbars, betas;
-    map<unsigned int, pair<double, double> > lrtBetas;
-
-    BarMap betaStarts_;
-    //BarMap betaSingles_;
+    //creating and getting detectors
+    BarMap vbars, betaStarts;
     vector < ChanEvent * > geEvts;
     vector <vector<AddBackEvent>> geAddback;
 
-    if (event.GetSummary("vandle")->GetList().size() != 0)
+    if (event.GetSummary("vandle")->GetList().empty()) {
         vbars = ((VandleProcessor *) DetectorDriver::get()->
                 GetProcessor("VandleProcessor"))->GetBars();
-
+    }
 
     static const vector<ChanEvent *> &doubleBetaStarts =
             event.GetSummary("beta:double:start")->GetList();
     BarBuilder startBars(doubleBetaStarts);
     startBars.BuildBars();
-    betaStarts_ = startBars.GetBarMap();
-
-    //if(event.GetSummary("beta:double")->GetList().size() != 0) {
-    //    betas = ((DoubleBetaProcessor *) DetectorDriver::get()->
-    //            GetProcessor("DoubleBetaProcessor"))->GetBars();
-    //      if (event.GetSummary("beta:double")->GetList().size() != 0) {
-    //        lrtBetas = ((DoubleBetaProcessor *) DetectorDriver::get()->
-    //              GetProcessor("DoubleBetaProcessor"))->GetLowResBars();
-    //}
-    //}
-
-    //static const vector<ChanEvent*> &doubleBetaSingles =
-    //	event.GetSummary("beta:double:singles")->GetList();
-    //BarBuilder gestartBars(doubleBetaSingles);
-    //gestartBars.BuildBars();
-    //betaSingles_=gestartBars.GetBarMap();
+    betaStarts = startBars.GetBarMap();
 
 
-    if (event.GetSummary("ge")->GetList().size() != 0) {
+    if (event.GetSummary("ge")->GetList().empty()) {
         geEvts = ((GeProcessor *) DetectorDriver::get()->
                 GetProcessor("GeProcessor"))->GetGeEvents();
         geAddback = ((GeProcessor *) DetectorDriver::get()->
@@ -221,34 +225,42 @@ bool Anl1471Processor::Process(RawEvent &event) {
     }
 
 #ifdef useroot
+    //fill pre-made size histograms
     Vsize->Fill(vbars.size());
-    Bsize->Fill(betaStarts_.size());
+    Bsize->Fill(betaStarts.size());
     Gsize->Fill(geEvts.size());
 
+//filling tape related vectors
+//clearing first to make sure it is empty
+    move.clear();
+    beam.clear();
+    //varibles used to fill vectors and damm plots
+    int MOVE, BEAM;
 
     if (TreeCorrelator::get()->place("TapeMove")->status()) {
-        tapeinfo.move = 1;
+        move.emplace_back(MOVE);
     } else {
-        tapeinfo.move = 0;
+        move.emplace_back(MOVE);
     }
+
     if (TreeCorrelator::get()->place("Beam")->status()) {
-        tapeinfo.beam = 1;
+        beam.emplace_back(BEAM);
     } else {
-        tapeinfo.beam = 0;
+        beam.emplace_back(BEAM);
     }
-    plot(D_tape, tapeinfo.move);
-    plot(D_beam, tapeinfo.beam);
+    plot(D_tape, MOVE);
+    plot(D_beam, BEAM);
 #endif
 
 
-    //plot(DD_DEBUGGING3, vbars.size());
-    plot(DD_DEBUGGING4, betaStarts_.size());
+    plot(DD_DEBUGGING4, betaStarts.size());
 
 
     //Begin processing for VANDLE bars
     for (BarMap::iterator it = vbars.begin(); it != vbars.end(); it++) {
         TimingDefs::TimingIdentifier barId = (*it).first;
         BarDetector bar = (*it).second;
+        int barType = -9999;
 
         if (!bar.GetHasEvent())
             continue;
@@ -275,8 +287,8 @@ bool Anl1471Processor::Process(RawEvent &event) {
         const TimingCalibration cal = bar.GetCalibration();
 
 
-        for (BarMap::iterator itStart = betaStarts_.begin();
-             itStart != betaStarts_.end(); itStart++) {
+        for (BarMap::iterator itStart = betaStarts.begin();
+             itStart != betaStarts.end(); itStart++) {
             BarDetector beta_start = (*itStart).second;
             unsigned int startLoc = (*itStart).first.first;
             if (!beta_start.GetHasEvent())
@@ -383,7 +395,7 @@ bool Anl1471Processor::Process(RawEvent &event) {
             vroot.bid = startLoc;
             vroot.gid = gamma_id;
             vroot.vsize = vbars.size();
-            vroot.bsize = betaStarts_.size();
+            vroot.bsize = betaStarts.size();
 
 #endif
 
@@ -403,16 +415,8 @@ bool Anl1471Processor::Process(RawEvent &event) {
             BETA->Fill(vroot.bqdcl, vroot.bsnrl);
             BetaGrowDecay->Fill(beta_start.GetQdc(),bcyc_time);
             NeutronGrowDecay->Fill(bar.GetQdc(),vcyc_time);
-            qdc_ = bar.GetQdc();
-            //tof = tof;
             roottree1_->Fill();
-            // bar.GetLeftSide().ZeroRootStructure(leftVandle);
-            // bar.GetRightSide().ZeroRootStructure(rightVandle);
-            // beta_start.GetLeftSide().ZeroRootStructure(leftBeta);
-            // beta_start.GetRightSide().ZeroRootStructure(rightBeta);
-            qdc_ = tof = -9999;
-            //VID = BID = SNRVL = SNRVR = -9999;
-            //GamEn = SNRBL = SNRBR = vandle_ = beta_ = ge_ = -9999;
+
 #endif
 
 	    //            plot(DD_DEBUGGING1, tof * plotMult_ + plotOffset_, bar.GetQdc());
@@ -450,8 +454,8 @@ bool Anl1471Processor::Process(RawEvent &event) {
             }
 
             if (doubleBetaStarts.size() != 0) {
-                for (BarMap::iterator itGB = betaStarts_.begin();
-                     itGB != betaStarts_.end(); itGB++) {
+                for (BarMap::iterator itGB = betaStarts.begin();
+                     itGB != betaStarts.end(); itGB++) {
                     gb_start = (*itGB).second;
                     gb_startLoc = (*itGB).first.first;
                     gb_en = gb_start.GetQdc();
@@ -475,7 +479,7 @@ bool Anl1471Processor::Process(RawEvent &event) {
             groot.gid = ge_id;
             groot.gbid = gb_startLoc;
             groot.gsize = geEvts.size();
-            groot.bsize = betaStarts_.size();
+            groot.bsize = betaStarts.size();
 
             roottree2_->Fill();
             GAMMA_SINGLES->Fill(ge_energy);
