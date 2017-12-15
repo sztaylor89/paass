@@ -62,23 +62,17 @@ std::vector<int> g_bid;//beta bar id
 std::vector<int> g_size;//size of gamma event
 std::vector<int> g_bsize;//size of beta event
 
-//assigning damm histogram id's,    Starts at 6050
+//assigning damm histogram id's,    Starts at damm id 6050
 namespace dammIds {
     namespace experiment {
-     /*   const int DD_TRACES  = 0;
-        const int D_TEST  = 1;
-        const int D_BADLOCATION  = 2;
-        const int D_STARTLOC  = 3;
-        */
-        const int DD_DEBUGGING4  = 4;
-        const int DD_MedCTOFvQDC  = 5;
-        const int DD_MedVetoed  = 6;
-        const int DD_SmCTOFvQDC  = 7;
-        const int DD_SmVetoed  = 8;
-        const int DD_DEBUGGING9  = 9;
-        const int D_tape = 10;
-        const int D_beam = 11;
-        const int DD_grow_decay = 12;
+        const int DD_MedCTOFvQDC  = 0;
+        const int DD_MedVetoed  = 1;
+        const int DD_SmCTOFvQDC  = 2;
+        const int DD_SmVetoed  = 3;
+        const int DD_SNRvQDC  = 4;
+        const int D_tape = 5;
+        const int D_beam = 6;
+        const int DD_grow_decay = 7;
     }
 }//namespace dammIds
 
@@ -87,17 +81,11 @@ using namespace dammIds::experiment;
 
 //declaring damm plots
 void Anl1471Processor::DeclarePlots() {
-/*    DeclareHistogram2D(DD_TRACES, S8, SE, "traces");
-    DeclareHistogram1D(D_TEST, SD, "beta gamma neutron test hist");
-    DeclareHistogram1D(D_BADLOCATION, S6, "'bad' trace bar location");
-    DeclareHistogram1D(D_STARTLOC, SB, "Detector Referenced as Start for vandle");
-    DeclareHistogram1D(DD_DEBUGGING4, S7, "Beta Multiplicity");
-*/
     DeclareHistogram2D(DD_MedCTOFvQDC, SC, SD, "ANL-medium-<E>-vs-CorTof");
     DeclareHistogram2D(DD_MedVetoed, SC, SD, "ANL-medium-vetoed");
     DeclareHistogram2D(DD_SmCTOFvQDC, SC, SD, "ANL-small-<E>-vs-CorTof");
     DeclareHistogram2D(DD_SmVetoed, SC, SD, "ANL-small-vetoed");
-    DeclareHistogram2D(DD_DEBUGGING9, SD, S6, "BSNRLvsBQDCL");
+    DeclareHistogram2D(DD_SNRvQDC, SD, S6, "BSNRLvsBQDCL");
     DeclareHistogram1D(D_tape, S1, "tape move");
     DeclareHistogram1D(D_beam, S1, "beam on/off");
     DeclareHistogram2D(DD_grow_decay, SC, SA, "Grow/Decay");
@@ -206,22 +194,18 @@ bool Anl1471Processor::Process(RawEvent &event) {
     vector <vector<AddBackEvent>> geAddback;
 
     if (event.GetSummary("vandle")->GetList().empty()) {
-        vbars = ((VandleProcessor *) DetectorDriver::get()->
-                GetProcessor("VandleProcessor"))->GetBars();
+        vbars = ((VandleProcessor *) DetectorDriver::get()->GetProcessor("VandleProcessor"))->GetBars();
     }
 
-    static const vector<ChanEvent *> &doubleBetaStarts =
-            event.GetSummary("beta:double:start")->GetList();
+    static const vector<ChanEvent *> &doubleBetaStarts = event.GetSummary("beta:double:start")->GetList();
     BarBuilder startBars(doubleBetaStarts);
     startBars.BuildBars();
     betaStarts = startBars.GetBarMap();
 
 
     if (event.GetSummary("ge")->GetList().empty()) {
-        geEvts = ((GeProcessor *) DetectorDriver::get()->
-                GetProcessor("GeProcessor"))->GetGeEvents();
-        geAddback = ((GeProcessor *) DetectorDriver::get()->
-                GetProcessor("GeProcessor"))->GetAddbackEvents();
+        geEvts = ((GeProcessor *) DetectorDriver::get()->GetProcessor("GeProcessor"))->GetGeEvents();
+        geAddback = ((GeProcessor *) DetectorDriver::get()->GetProcessor("GeProcessor"))->GetAddbackEvents();
     }
 
 #ifdef useroot
@@ -248,63 +232,78 @@ bool Anl1471Processor::Process(RawEvent &event) {
     } else {
         beam.emplace_back(BEAM);
     }
-    plot(D_tape, MOVE);
-    plot(D_beam, BEAM);
 #endif
 
-
-    plot(DD_DEBUGGING4, betaStarts.size());
+    plot(D_tape, MOVE);
+    plot(D_beam, BEAM);
 
 
     //Begin processing for VANDLE bars
+    //loop over vandle bar events
     for (BarMap::iterator it = vbars.begin(); it != vbars.end(); it++) {
+
+        //getting info from iterator
         TimingDefs::TimingIdentifier barId = (*it).first;
         BarDetector bar = (*it).second;
         int barType = -9999;
+        unsigned int barLoc = barId.first;
+        const TimingCalibration cal = bar.GetCalibration();
 
+        //check in case code didn't have event
         if (!bar.GetHasEvent())
             continue;
 
+        //set bar type
         if (bar.GetType() == "small")
             barType = 0;
         else if (bar.GetType() == "medium")
             barType = 1;
 
+        //loop over beta events
+        for (BarMap::iterator itStart = betaStarts.begin(); itStart != betaStarts.end(); itStart++) {
 
-        //stuff to test TDIFF spike
-        /*if (barId.first == 2){
-            plot(DD_DEBUGGING0,
-                 bar.GetTimeDifference()*2+1000,
-                 bar.GetLeftSide().GetMaximumValue());
-            plot(DD_DEBUGGING1,
-                 bar.GetTimeDifference()*2+1000,
-                 bar.GetRightSide().GetMaximumValue());
-            }
-            plot(DD_DEBUGGING2,
-             bar.GetTimeDifference()*2+1000, barId.first);
-        */
-        unsigned int barLoc = barId.first;
-        const TimingCalibration cal = bar.GetCalibration();
+            //clearing vectors.  Since I fill my tree in the beta loop I will clear vectors here
+            tof.clear();
+            qdc.clear();
+            snrl.clear();
+            snrr.clear();
+            pos.clear();
+            tdiff.clear();
+            ben.clear();
+            bqdcl.clear();
+            bqdcr.clear();
+            bsnrl.clear();
+            bsnrr.clear();
+            cyc.clear();
+            bcyc.clear();
+            gen.clear();
+            Vtime.clear();
+            Gtime.clear();
+            Btime.clear();
+            BGtime.clear();
+            vid.clear();
+            vtype.clear();
+            bid.clear();
+            gid.clear();
+            vsize.clear();
+            gsize.clear();
+            bsize.clear();
 
-
-        for (BarMap::iterator itStart = betaStarts.begin();
-             itStart != betaStarts.end(); itStart++) {
             BarDetector beta_start = (*itStart).second;
             unsigned int startLoc = (*itStart).first.first;
+
+            //check for event
             if (!beta_start.GetHasEvent())
                 continue;
+
             double tofOffset = cal.GetTofOffset(startLoc);
-            double tof = bar.GetCorTimeAve() -
+            double TOF = bar.GetCorTimeAve() -
                          beta_start.GetCorTimeAve() + tofOffset;
-
-
             double corTof =
-                    ((VandleProcessor *) DetectorDriver::get()->
-                            GetProcessor("VandleProcessor"))->
-                            CorrectTOF(tof, bar.GetFlightPath(), cal.GetZ0());
+                    ((VandleProcessor *) DetectorDriver::get()->GetProcessor("VandleProcessor"))->CorrectTOF(TOF, bar
+                            .GetFlightPath(), cal.GetZ0());
 
-
-            //tape move veto cut damm
+            //tape move veto cut for damm
             bool tapeMove = TreeCorrelator::get()->place("TapeMove")->status();
             if (tapeMove == 0) { //plot only if tape is NOT moving
                 if (bar.GetType() == "medium")
@@ -322,14 +321,13 @@ bool Anl1471Processor::Process(RawEvent &event) {
                     plot(DD_SmVetoed, corTof * 2 + 1000, bar.GetQdc());
             }
 
-            plot(DD_DEBUGGING9, beta_start.GetLeftSide().GetTraceQdc(),
-                 beta_start.GetLeftSide().GetTrace().GetSignalToNoiseRatio());
+            plot(DD_SNRvQDC, beta_start.GetLeftSide().GetTraceQdc(), beta_start.GetLeftSide().GetTrace().GetSignalToNoiseRatio());
 
-            //adding cycle time stuff for vandle
-            double vcyc_time, bcyc_time, cyc_time, vtime, btime;
-            vcyc_time = bcyc_time = cyc_time = vtime = btime = -9999;
+            double vcyc_time, bcyc_time, btime, vtime;
+            vcyc_time = bcyc_time = btime = vtime = -9999;
+            //cycle time stuff for vandle
             if (TreeCorrelator::get()->place("Cycle")->status()) {
-                cyc_time = TreeCorrelator::get()->place("Cycle")->last().time;
+                double cyc_time = TreeCorrelator::get()->place("Cycle")->last().time;
                 cyc_time *= (Globals::get()->GetClockInSeconds() * 1.e9);//converts from clock ticks to ns
 
                 //vandle event
@@ -346,61 +344,61 @@ bool Anl1471Processor::Process(RawEvent &event) {
             //adding HPGE energy info to vandle tree
             double HPGE_energy = -9999.0;
             double BG_TDIFF = -9999.0;
-            int gamma_id=-9999;
+            int gamma_id = -9999;
+            //get hpge event info if it exists
             if (geEvts.size() != 0) {
-	      for (vector<ChanEvent *>::const_iterator itHPGE = geEvts.begin();
-		   itHPGE != geEvts.end(); itHPGE++){
-                double B_time, G_time;
-                gamma_id = (*itHPGE)->GetChanID().GetLocation();
-                G_time = (*itHPGE)->GetTimeSansCfd();//gives result in clock ticks
-                //double GG = (*itHPGE)->GetTimeSansCfd();// used as check
-                G_time *= Globals::get()->GetClockInSeconds() * 1.e9; //converts clock ticks to ns
-                B_time = beta_start.GetCorTimeAve(); //gives result in ns
-                BG_TDIFF = G_time - B_time;
-                if (BG_TDIFF > 0){
+                //loop over hpge events
+                for (vector<ChanEvent *>::const_iterator itHPGE = geEvts.begin(); itHPGE != geEvts.end(); itHPGE++){
+                    gamma_id = (*itHPGE)->GetChanID().GetLocation();
+                    double G_time = (*itHPGE)->GetTimeSansCfd();//gives result in clock ticks
+                    G_time *= Globals::get()->GetClockInSeconds() * 1.e9; //converts clock ticks to ns
+                    double B_time = beta_start.GetCorTimeAve(); //gives result in ns
+                    BG_TDIFF = G_time - B_time;
                     HPGE_energy = (*itHPGE)->GetCalibratedEnergy();
-                    plot (D_TEST, HPGE_energy);
-                }else {
-                    HPGE_energy = -7777.0;
-                    gamma_id = -7777;
+
+                    //fill hpge vectors
+                    gen.emplace_back(HPGE_energy);
+                    Gtime.emplace_back(G_time);
+                    BGtime.emplace_back(BG_TDIFF);
+                    gid.emplace_back(gamma_id);
+                    gsize.emplace_back(geEvts.size());
+
                 }
-          }
-	    }else{ 
-                HPGE_energy = -8888.0;
-                gamma_id=-8888;
-	    }
+            }else{//fill hpge vectors with default value to cut out later in root
+                gen.emplace_back(-8888);
+                Gtime.emplace_back(-8888);
+                BGtime.emplace_back(-8888);
+                gid.emplace_back(-8888);
+                gsize.emplace_back(-8888);
+            }
 
-	
 
 
 
+//fill vandle and beta vectors
 #ifdef useroot
-            vroot.tof = corTof;
-            vroot.qdc = bar.GetQdc();
-            vroot.snrl = bar.GetLeftSide().GetTrace().GetSignalToNoiseRatio();
-            vroot.snrr = bar.GetRightSide().GetTrace().GetSignalToNoiseRatio();
-            vroot.pos = bar.GetQdcPosition();
-            vroot.tdiff = bar.GetTimeDifference();
-            vroot.ben = beta_start.GetQdc();
-            vroot.bqdcl = beta_start.GetLeftSide().GetTraceQdc();
-            vroot.bqdcr = beta_start.GetRightSide().GetTraceQdc();
-            vroot.bsnrl = beta_start.GetLeftSide().GetTrace().GetSignalToNoiseRatio();
-            vroot.bsnrr = beta_start.GetRightSide().GetTrace().GetSignalToNoiseRatio();
-            vroot.cyc = vcyc_time;
-            vroot.bcyc = bcyc_time;
-            vroot.HPGE = HPGE_energy;
-            vroot.BGtime = BG_TDIFF;
-            vroot.vid = barLoc;
-            vroot.vtype = barType;
-            vroot.bid = startLoc;
-            vroot.gid = gamma_id;
-            vroot.vsize = vbars.size();
-            vroot.bsize = betaStarts.size();
+            tof.emplace_back(corTof);
+            qdc.emplace_back(bar.GetQdc());
+            snrl.emplace_back(bar.GetLeftSide().GetTrace().GetSignalToNoiseRatio());
+            snrr.emplace_back(bar.GetRightSide().GetTrace().GetSignalToNoiseRatio());
+            pos.emplace_back(bar.GetQdcPosition());
+            tdiff.emplace_back(bar.GetTimeDifference());
+            ben.emplace_back(beta_start.GetQdc());
+            bqdcl.emplace_back(beta_start.GetLeftSide().GetTraceQdc());
+            bqdcr.emplace_back(beta_start.GetRightSide().GetTraceQdc());
+            bsnrl.emplace_back(beta_start.GetLeftSide().GetTrace().GetSignalToNoiseRatio());
+            bsnrr.emplace_back(beta_start.GetRightSide().GetTrace().GetSignalToNoiseRatio());
+            cyc.emplace_back(vcyc_time);
+            bcyc.emplace_back(bcyc_time);
+            Vtime.emplace_back(vtime);
+            Btime.emplace_back(btime);
+            vid.emplace_back(barLoc);
+            vtype.emplace_back(barType);
+            bid.emplace_back(startLoc);
+            vsize.emplace_back(vbars.size());
+            bsize.emplace_back(betaStarts.size());
 
-#endif
-
-
-#ifdef useroot
+            //fill pre-made vandle related root histograms
             if (barType == 1) {
                 QDCvsCORTOF_Medium->Fill(corTof, bar.GetQdc());
                 BARvsQDC_Medium->Fill(bar.GetQdc(), barLoc);
@@ -412,15 +410,13 @@ bool Anl1471Processor::Process(RawEvent &event) {
                 BARvsTDIFF_Small->Fill(bar.GetTimeDifference(), barLoc);
                 BARvsCORTOF_Small->Fill(corTof, barLoc);
             }
-            BETA->Fill(vroot.bqdcl, vroot.bsnrl);
+            BETA->Fill(beta_start.GetLeftSide().GetTraceQdc(), beta_start.GetLeftSide().GetTrace().GetSignalToNoiseRatio());//bqdcl vs bsnrl
             BetaGrowDecay->Fill(beta_start.GetQdc(),bcyc_time);
             NeutronGrowDecay->Fill(bar.GetQdc(),vcyc_time);
+
+            //fill vandle root tree
             roottree1_->Fill();
-
 #endif
-
-	    //            plot(DD_DEBUGGING1, tof * plotMult_ + plotOffset_, bar.GetQdc());
-
         } // for(TimingMap::iterator itStart
     } //(BarMap::iterator itBar
     //End processing for VANDLE bars
@@ -432,8 +428,7 @@ bool Anl1471Processor::Process(RawEvent &event) {
     //Stuff to fill HPGe branch
 
     if (geEvts.size() != 0) {
-        for (vector<ChanEvent *>::const_iterator itGe = geEvts.begin();
-             itGe != geEvts.end(); itGe++) {
+        for (vector<ChanEvent *>::const_iterator itGe = geEvts.begin(); itGe != geEvts.end(); itGe++) {
             double ge_energy, ge_time, gb_time, grow_decay_time, gb_en, gcyc_time, gb_grow_decay_time;
             ge_energy = ge_time = gb_time = grow_decay_time = gb_en = gcyc_time = gb_grow_decay_time =-9999.0;
             int ge_id = -9999;
@@ -454,8 +449,7 @@ bool Anl1471Processor::Process(RawEvent &event) {
             }
 
             if (doubleBetaStarts.size() != 0) {
-                for (BarMap::iterator itGB = betaStarts.begin();
-                     itGB != betaStarts.end(); itGB++) {
+                for (BarMap::iterator itGB = betaStarts.begin(); itGB != betaStarts.end(); itGB++) {
                     gb_start = (*itGB).second;
                     gb_startLoc = (*itGB).first.first;
                     gb_en = gb_start.GetQdc();
@@ -481,20 +475,22 @@ bool Anl1471Processor::Process(RawEvent &event) {
             groot.gsize = geEvts.size();
             groot.bsize = betaStarts.size();
 
-            roottree2_->Fill();
+
             GAMMA_SINGLES->Fill(ge_energy);
-	    //            GrowDecay->Fill(ge_energy,grow_decay_time);
             if (doubleBetaStarts.size() != 0) {
                 BETA_GATED_GAMMA->Fill(ge_energy);
                 GammaGrowDecay->Fill(ge_energy,grow_decay_time);
                 plot(DD_grow_decay, ge_energy, grow_decay_time);
             }
-#endif
-        }
-    }
 
-   
-   EndProcess();
+            //fill gamma root tree
+            roottree2_->Fill();
+#endif
+        }//for itGe
+    }//if geEvts
+
+
+    EndProcess();
     return(true);
 }
 
