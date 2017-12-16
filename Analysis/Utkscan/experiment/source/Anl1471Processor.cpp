@@ -47,10 +47,10 @@ std::vector<int> gsize;//size of gamma event
 std::vector<int> bsize;//size of beta event
 
 //tape related variables
-std::vector<bool> v_move;//moving tape collector moving/stationary   0=stopped, 1=moving
-std::vector<bool> v_beam;//beam on/off    0=off, 1=on
-std::vector<bool> g_move;//move for gamma tree
-std::vector<bool> g_beam;//beam for gamma tree
+std::vector<int> v_move;//moving tape collector moving/stationary   0=stopped, 1=moving
+std::vector<int> v_beam;//beam on/off    0=off, 1=on
+std::vector<int> g_move;//move for gamma tree
+std::vector<int> g_beam;//beam for gamma tree
 
 //gamma singles variables, keeping separate vectors to avoid confusion from similar ones in neutron variables
 std::vector<double> g_en;//gamma energy
