@@ -47,8 +47,10 @@ std::vector<int> gsize;//size of gamma event
 std::vector<int> bsize;//size of beta event
 
 //tape related variables
-std::vector<bool> move;//moving tape collector moving/stationary   0=stopped, 1=moving
-std::vector<bool> beam;//beam on/off    0=off, 1=on
+std::vector<bool> v_move;//moving tape collector moving/stationary   0=stopped, 1=moving
+std::vector<bool> v_beam;//beam on/off    0=off, 1=on
+std::vector<bool> g_move;//move for gamma tree
+std::vector<bool> g_beam;//beam for gamma tree
 
 //gamma singles variables, keeping separate vectors to avoid confusion from similar ones in neutron variables
 std::vector<double> g_en;//gamma energy
@@ -136,8 +138,8 @@ Anl1471Processor::Anl1471Processor() : EventProcessor(OFFSET, RANGE, "Anl1471PRo
     roottree1_->Branch("vsize",&vsize);
     roottree1_->Branch("gsize",&gsize);
     roottree1_->Branch("bsize",&bsize);
-    roottree1_->Branch("move",&move);
-    roottree1_->Branch("beam",&beam);
+    roottree1_->Branch("move",&v_move);
+    roottree1_->Branch("beam",&v_beam);
 
     //gamma based
     roottree2_->Branch("g_en",&g_en);
@@ -150,8 +152,8 @@ Anl1471Processor::Anl1471Processor() : EventProcessor(OFFSET, RANGE, "Anl1471PRo
     roottree2_->Branch("g_bid",&g_bid);
     roottree2_->Branch("g_size",&g_size);
     roottree2_->Branch("g_bsize",&g_bsize);
-    roottree2_->Branch("move",&move);
-    roottree2_->Branch("beam",&beam);
+    roottree2_->Branch("move",&g_move);
+    roottree2_->Branch("beam",&g_beam);
 
     //pre-making some frequently used histograms in root
     QDCvsCORTOF_Medium = new TH2D("MED-QDC vs CorTof","",1100,-100,1000,25000,0,25000);
@@ -216,24 +218,36 @@ bool Anl1471Processor::Process(RawEvent &event) {
 
 //filling tape related vectors
 //clearing first to make sure it is empty
-    move.clear();
-    beam.clear();
-    //varibles used to fill vectors and damm plots
+    v_move.clear();
+    v_beam.clear();
+    g_move.clear();
+    g_beam.clear();
+
+    //variables used to fill vectors and damm plots
     int MOVE, BEAM;
 
     if (TreeCorrelator::get()->place("TapeMove")->status()) {
-        move.emplace_back(MOVE);
+        MOVE = 1;
+        v_move.emplace_back(MOVE);
+        g_move.emplace_back(MOVE);
     } else {
-        move.emplace_back(MOVE);
+        MOVE = 0;
+        v_move.emplace_back(MOVE);
+        g_move.emplace_back(MOVE);
     }
 
     if (TreeCorrelator::get()->place("Beam")->status()) {
-        beam.emplace_back(BEAM);
+        BEAM = 1;
+        v_beam.emplace_back(BEAM);
+        g_beam.emplace_back(BEAM);
     } else {
-        beam.emplace_back(BEAM);
+        BEAM = 0;
+        v_beam.emplace_back(BEAM);
+        g_beam.emplace_back(BEAM);
     }
 #endif
 
+    //plot tape related damm histograms
     plot(D_tape, MOVE);
     plot(D_beam, BEAM);
 
@@ -262,7 +276,7 @@ bool Anl1471Processor::Process(RawEvent &event) {
         //loop over beta events
         for (BarMap::iterator itStart = betaStarts.begin(); itStart != betaStarts.end(); itStart++) {
 
-            //clearing vectors.  Since I fill my tree in the beta loop I will clear vectors here
+            //clearing vectors.  Since I fill my root tree in the beta loop I will clear vectors here
             tof.clear();
             qdc.clear();
             snrl.clear();
@@ -372,9 +386,6 @@ bool Anl1471Processor::Process(RawEvent &event) {
                 gsize.emplace_back(-8888);
             }
 
-
-
-
 //fill vandle and beta vectors
 #ifdef useroot
             tof.emplace_back(corTof);
@@ -429,14 +440,29 @@ bool Anl1471Processor::Process(RawEvent &event) {
 
     if (geEvts.size() != 0) {
         for (vector<ChanEvent *>::const_iterator itGe = geEvts.begin(); itGe != geEvts.end(); itGe++) {
-            double ge_energy, ge_time, gb_time, grow_decay_time, gb_en, gcyc_time, gb_grow_decay_time;
-            ge_energy = ge_time = gb_time = grow_decay_time = gb_en = gcyc_time = gb_grow_decay_time =-9999.0;
-            int ge_id = -9999;
+
+            //clear vectors here since this for loop fills the root tree
+            g_en.clear();
+            g_time.clear();
+            g_cyc.clear();
+            g_ben.clear();
+            g_btime.clear();
+            g_bcyc.clear();
+            g_id.clear();
+            g_bid.clear();
+            g_size.clear();
+            g_bsize.clear();
+
+            //variables used for calculations and filling vectors
+            double gb_time, grow_decay_time, gb_en, gcyc_time, gb_grow_decay_time;
+            gb_time = grow_decay_time = gb_en = gcyc_time = gb_grow_decay_time =-9999.0;
             int gb_startLoc = -9999;
+
+            //creating beta bar
             BarDetector gb_start;
-            ge_energy = (*itGe)->GetCalibratedEnergy();
-            ge_id = (*itGe)->GetChanID().GetLocation();
-            ge_time = (*itGe)->GetWalkCorrectedTime();
+            double ge_energy = (*itGe)->GetCalibratedEnergy();
+            int ge_id = (*itGe)->GetChanID().GetLocation();
+            double ge_time = (*itGe)->GetWalkCorrectedTime();
             ge_time *= (Globals::get()->GetClockInSeconds() * 1.e9);//converts from clock ticks to ns
 
             if (TreeCorrelator::get()->place("Cycle")->status()) {
@@ -444,8 +470,6 @@ bool Anl1471Processor::Process(RawEvent &event) {
                 gcyc_time *= (Globals::get()->GetClockInSeconds() * 1.e9);//converts from clock ticks to ns
                 grow_decay_time = (ge_time - gcyc_time);//in ns
                 grow_decay_time /= 1e9;//converts from ns to s
-                //cout << ge_energy << endl << grow_decay_time << endl << endl;
-                //plot(DD_grow_decay, ge_energy, grow_decay_time);
             }
 
             if (doubleBetaStarts.size() != 0) {
@@ -456,26 +480,35 @@ bool Anl1471Processor::Process(RawEvent &event) {
                     gb_time = gb_start.GetCorTimeAve();//in ns
                     gb_grow_decay_time = (gb_time - gcyc_time);//in ns
                     gb_grow_decay_time /= 1e9;//converts from ns to s
+
+                    //fill beta vectors
+                    g_ben.emplace_back(gb_en);
+                    g_btime.emplace_back(gb_time);
+                    g_bcyc.emplace_back(gb_grow_decay_time);
+                    g_bid.emplace_back(gb_startLoc);
+                    g_bsize.emplace_back(betaStarts.size());
                 }
-            } else {
-                gb_startLoc = -8888;
-                gb_en = -8888;
-                gb_time = -8888;
+            } else {//fill beta vectors with default value to cut out later in root
+                g_ben.emplace_back(-8888);
+                g_btime.emplace_back(-8888);
+                g_bcyc.emplace_back(-8888);
+                g_bid.emplace_back(-8888);
+                g_bsize.emplace_back(-8888);
             }
 
 #ifdef useroot
-            groot.gen = ge_energy;
-            groot.gtime = ge_time;
-            groot.gcyc = grow_decay_time;
-            groot.gben = gb_en;
-            groot.gbtime = gb_time;
-            groot.gbcyc = gb_grow_decay_time;
-            groot.gid = ge_id;
-            groot.gbid = gb_startLoc;
-            groot.gsize = geEvts.size();
-            groot.bsize = betaStarts.size();
+
+            //fill gamma vectors
+            g_en.emplace_back(ge_energy);
+            g_time.emplace_back(ge_time);
+            g_cyc.emplace_back(grow_decay_time);
+
+            g_id.emplace_back(ge_id);
+
+            g_size.emplace_back(geEvts.size());
 
 
+            //fill pre-made gamma root histograms
             GAMMA_SINGLES->Fill(ge_energy);
             if (doubleBetaStarts.size() != 0) {
                 BETA_GATED_GAMMA->Fill(ge_energy);
