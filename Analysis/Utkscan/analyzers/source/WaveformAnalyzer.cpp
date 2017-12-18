@@ -80,7 +80,7 @@ void WaveformAnalyzer::Analyze(Trace &trace, const std::string &type,
         trace.SetTraceSansBaseline(traceNoBaseline);
         trace.SetWaveformRange(waveformRange);
     } catch (range_error &ex) {
-        cerr << "WaveformAnalyzer::Analyze - " << ex.what() << endl;
+        cerr << "WaveformAnalyzer::Analyze - " << ex.what() << " +++++" << type << " " << subtype << " " << endl;
         EndAnalyze();
     }
 }

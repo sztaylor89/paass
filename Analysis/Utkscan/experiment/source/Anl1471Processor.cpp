@@ -16,8 +16,6 @@
 #include "Anl1471Processor.hpp"
 #include "VandleProcessor.hpp"
 
-//double Anl1471Processor::tof;
-
 
 //neutron related variables
 std::vector<double> tof;//time of flight
@@ -156,16 +154,16 @@ Anl1471Processor::Anl1471Processor() : EventProcessor(OFFSET, RANGE, "Anl1471PRo
     roottree2_->Branch("beam",&g_beam);
 
     //pre-making some frequently used histograms in root
-    QDCvsCORTOF_Medium = new TH2D("MED-QDC vs CorTof","",1100,-100,1000,25000,0,25000);
-    BARvsQDC_Medium = new TH2D("MED-Bar vs QDC","",25100,-100,25000,25,0,25);
-    BARvsTDIFF_Medium = new TH2D("MED-Bar vs TDIFF","",200,-25,25,25,0,25);
-    BARvsCORTOF_Medium = new TH2D("MED-Bar vs CorTof","",1100,-100,1000,25,0,25);
-    QDCvsCORTOF_Small = new TH2D("SM-QDC vs CorTof","",1100,-100,1000,25000,0,25000);
-    BARvsQDC_Small = new TH2D("SM-Bar vs QDC","",25100,-100,25000,25,0,25);
-    BARvsTDIFF_Small = new TH2D("SM-Bar vs TDIFF","",200,-25,25,25,0,25);
-    BARvsCORTOF_Small = new TH2D("SM-Bar vs CorTof","",1100,-100,1000,25,0,25);
-    GAMMA_SINGLES = new TH1D("Gamma Singles","",3100,-100,3000);
-    BETA_GATED_GAMMA = new TH1D("Beta Gated Gamma","",3100,-100,3000);
+    QDCvsCORTOF_Medium = new TH2D("MED-QDC vs CorTof","",1100,-100.0,1000,25000,0,25000);
+    BARvsQDC_Medium = new TH2D("MED-Bar vs QDC","",25100,-100.0,25000,25,0,25);
+    BARvsTDIFF_Medium = new TH2D("MED-Bar vs TDIFF","",200,-25.0,25,25,0,25);
+    BARvsCORTOF_Medium = new TH2D("MED-Bar vs CorTof","",1100,-100.0,1000,25,0,25);
+    QDCvsCORTOF_Small = new TH2D("SM-QDC vs CorTof","",1100,-100.0,1000,25000,0,25000);
+    BARvsQDC_Small = new TH2D("SM-Bar vs QDC","",25100,-100.0,25000,25,0,25);
+    BARvsTDIFF_Small = new TH2D("SM-Bar vs TDIFF","",200,-25.0,25,25,0,25);
+    BARvsCORTOF_Small = new TH2D("SM-Bar vs CorTof","",1100,-100.0,1000,25,0,25);
+    GAMMA_SINGLES = new TH1D("Gamma Singles","",3100,-100.0,3000);
+    BETA_GATED_GAMMA = new TH1D("Beta Gated Gamma","",3100,-100.0,3000);
     Vsize = new TH1D("Vsize","",40,0,40);
     Bsize = new TH1D("Bsize","",40,0,40);
     Gsize =new TH1D("Gsize","",40,0,40);
@@ -304,15 +302,14 @@ bool Anl1471Processor::Process(RawEvent &event) {
             bsize.clear();
 
             BarDetector beta_start = (*itStart).second;
-            unsigned int startLoc = (*itStart).first.first;
+            unsigned startLoc = (*itStart).first.first;
 
             //check for event
             if (!beta_start.GetHasEvent())
                 continue;
 
             double tofOffset = cal.GetTofOffset(startLoc);
-            double TOF = bar.GetCorTimeAve() -
-                         beta_start.GetCorTimeAve() + tofOffset;
+            double TOF = bar.GetCorTimeAve() - beta_start.GetCorTimeAve() + tofOffset;
             double corTof =
                     ((VandleProcessor *) DetectorDriver::get()->GetProcessor("VandleProcessor"))->CorrectTOF(TOF, bar
                             .GetFlightPath(), cal.GetZ0());
@@ -358,12 +355,12 @@ bool Anl1471Processor::Process(RawEvent &event) {
             //adding HPGE energy info to vandle tree
             double HPGE_energy = -9999.0;
             double BG_TDIFF = -9999.0;
-            int gamma_id = -9999;
+            unsigned int gamma_id = 9999;
             //get hpge event info if it exists
             if (geEvts.size() != 0) {
                 //loop over hpge events
                 for (vector<ChanEvent *>::const_iterator itHPGE = geEvts.begin(); itHPGE != geEvts.end(); itHPGE++){
-                    gamma_id = (*itHPGE)->GetChanID().GetLocation();
+ //                   gamma_id = (*itHPGE)->GetChanID().GetLocation(); //ERROR
                     double G_time = (*itHPGE)->GetTimeSansCfd();//gives result in clock ticks
                     G_time *= Globals::get()->GetClockInSeconds() * 1.e9; //converts clock ticks to ns
                     double B_time = beta_start.GetCorTimeAve(); //gives result in ns
@@ -461,7 +458,8 @@ bool Anl1471Processor::Process(RawEvent &event) {
             //creating beta bar
             BarDetector gb_start;
             double ge_energy = (*itGe)->GetCalibratedEnergy();
-            int ge_id = (*itGe)->GetChanID().GetLocation();
+//            unsigned int ge_id = (*itGe)->GetChanID().GetLocation(); //ERROR
+            unsigned int ge_id = 0;
             double ge_time = (*itGe)->GetWalkCorrectedTime();
             ge_time *= (Globals::get()->GetClockInSeconds() * 1.e9);//converts from clock ticks to ns
 
@@ -497,16 +495,12 @@ bool Anl1471Processor::Process(RawEvent &event) {
             }
 
 #ifdef useroot
-
             //fill gamma vectors
             g_en.emplace_back(ge_energy);
             g_time.emplace_back(ge_time);
             g_cyc.emplace_back(grow_decay_time);
-
             g_id.emplace_back(ge_id);
-
             g_size.emplace_back(geEvts.size());
-
 
             //fill pre-made gamma root histograms
             GAMMA_SINGLES->Fill(ge_energy);
@@ -521,7 +515,6 @@ bool Anl1471Processor::Process(RawEvent &event) {
 #endif
         }//for itGe
     }//if geEvts
-
 
     EndProcess();
     return(true);
