@@ -360,7 +360,8 @@ bool Anl1471Processor::Process(RawEvent &event) {
             if (geEvts.size() != 0) {
                 //loop over hpge events
                 for (vector<ChanEvent *>::const_iterator itHPGE = geEvts.begin(); itHPGE != geEvts.end(); itHPGE++){
- //                   gamma_id = (*itHPGE)->GetChanID().GetLocation(); //ERROR
+ //                   gamma_id = (*itHPGE)->GetChanID().GetLocation(); //ERROR doing it this way
+                    gamma_id = (*itHPGE)->GetChannelNumber();
                     double G_time = (*itHPGE)->GetTimeSansCfd();//gives result in clock ticks
                     G_time *= Globals::get()->GetClockInSeconds() * 1.e9; //converts clock ticks to ns
                     double B_time = beta_start.GetCorTimeAve(); //gives result in ns
@@ -458,8 +459,8 @@ bool Anl1471Processor::Process(RawEvent &event) {
             //creating beta bar
             BarDetector gb_start;
             double ge_energy = (*itGe)->GetCalibratedEnergy();
-//            unsigned int ge_id = (*itGe)->GetChanID().GetLocation(); //ERROR
-            unsigned int ge_id = 0;
+//            unsigned int ge_id = (*itGe)->GetChanID().GetLocation(); //ERROR  doing it this way
+            unsigned int ge_id = (*itGe)->GetChannelNumber();
             double ge_time = (*itGe)->GetWalkCorrectedTime();
             ge_time *= (Globals::get()->GetClockInSeconds() * 1.e9);//converts from clock ticks to ns
 
