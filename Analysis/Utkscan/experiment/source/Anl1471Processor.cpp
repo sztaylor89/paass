@@ -18,48 +18,48 @@
 
 
 //neutron related variables
-std::vector<double> tof;//time of flight
-std::vector<double> qdc;//vandle vbarenergy/qdc
-std::vector<double> snrl;//vandle signal to noise ratio left
-std::vector<double> snrr;//vandle signal to noise ratio right
-std::vector<double> pos;//position in bar
-std::vector<double> tdiff;//time difference between vandle bar ends
-std::vector<double> ben;//beta bar energy/qdc
-std::vector<double> bqdcl;//beta qdc left
-std::vector<double> bqdcr;//beta qdc right
-std::vector<double> bsnrl;// beta signal to noise ratio left
-std::vector<double> bsnrr;//beta signal to noise ratio right
-std::vector<double> cyc;//vandle event time in reference to start of cycle
-std::vector<double> bcyc;//beta event time in reference to  start of cycle
+double tof;//time of flight
+double qdc;//vandle vbarenergy/qdc
+double snrl;//vandle signal to noise ratio left
+double snrr;//vandle signal to noise ratio right
+double pos;//position in bar
+double tdiff;//time difference between vandle bar ends
+double ben;//beta bar energy/qdc
+double bqdcl;//beta qdc left
+double bqdcr;//beta qdc right
+double bsnrl;// beta signal to noise ratio left
+double bsnrr;//beta signal to noise ratio right
+double cyc;//vandle event time in reference to start of cycle
+double bcyc;//beta event time in reference to  start of cycle
 std::vector<double> gen;//gamma energy
-std::vector<double> Vtime;//vandle event time
+double Vtime;//vandle event time
 std::vector<double> Gtime;//gamma event time
-std::vector<double> Btime;//beta event time
+double Btime;//beta event time
 std::vector<double> BGtime;//time difference between beta and gamma events
-std::vector<int> vid;//vandle bar id
-std::vector<int> vtype;//vandle bar type, 0=small, 1=medium
-std::vector<int> bid;//beta bar id
+int vid;//vandle bar id
+int vtype;//vandle bar type, 0=small, 1=medium
+int bid;//beta bar id
 std::vector<int> gid;//hpge clover leaf id
-std::vector<int> vsize;//size of vandle event
+int vsize;//size of vandle event
 std::vector<int> gsize;//size of gamma event
-std::vector<int> bsize;//size of beta event
+int bsize;//size of beta event
 
 //tape related variables
-std::vector<int> v_move;//moving tape collector moving/stationary   0=stopped, 1=moving
-std::vector<int> v_beam;//beam on/off    0=off, 1=on
-std::vector<int> g_move;//move for gamma tree
-std::vector<int> g_beam;//beam for gamma tree
+int v_move;//moving tape collector moving/stationary   0=stopped, 1=moving
+int v_beam;//beam on/off    0=off, 1=on
+int g_move;//move for gamma tree
+int g_beam;//beam for gamma tree
 
 //gamma singles variables, keeping separate vectors to avoid confusion from similar ones in neutron variables
-std::vector<double> g_en;//gamma energy
-std::vector<double> g_time;//gamma event time
-std::vector<double> g_cyc;//gamma event time in reference to start of cycle
+double g_en;//gamma energy
+double g_time;//gamma event time
+double g_cyc;//gamma event time in reference to start of cycle
 std::vector<double> g_ben;//beta energy
 std::vector<double> g_btime;//beta event time
 std::vector<double> g_bcyc;//beta event time in reference to start of cycle
-std::vector<int> g_id;//hpge clover leaf id
+int g_id;//hpge clover leaf id
 std::vector<int> g_bid;//beta bar id
-std::vector<int> g_size;//size of gamma event
+int g_size;//size of gamma event
 std::vector<int> g_bsize;//size of beta event
 
 //assigning damm histogram id's,    Starts at damm id 6050
@@ -214,34 +214,34 @@ bool Anl1471Processor::Process(RawEvent &event) {
     Bsize->Fill(betaStarts.size());
     Gsize->Fill(geEvts.size());
 
-//filling tape related vectors
+
 //clearing first to make sure it is empty
-    v_move.clear();
-    v_beam.clear();
-    g_move.clear();
-    g_beam.clear();
+    v_move=-9999;
+    v_beam=-9999;
+    g_move=-9999;
+    g_beam=-9999;
 
     //variables used to fill vectors and damm plots
     int MOVE, BEAM;
 
     if (TreeCorrelator::get()->place("TapeMove")->status()) {
         MOVE = 1;
-        v_move.emplace_back(MOVE);
-        g_move.emplace_back(MOVE);
+        v_move=MOVE;
+        g_move=MOVE;
     } else {
         MOVE = 0;
-        v_move.emplace_back(MOVE);
-        g_move.emplace_back(MOVE);
+        v_move=MOVE;
+        g_move=MOVE;
     }
 
     if (TreeCorrelator::get()->place("Beam")->status()) {
         BEAM = 1;
-        v_beam.emplace_back(BEAM);
-        g_beam.emplace_back(BEAM);
+        v_beam=BEAM;
+        g_beam=BEAM;
     } else {
         BEAM = 0;
-        v_beam.emplace_back(BEAM);
-        g_beam.emplace_back(BEAM);
+        v_beam=BEAM;
+        g_beam=BEAM;
     }
 #endif
 
@@ -275,31 +275,31 @@ bool Anl1471Processor::Process(RawEvent &event) {
         for (BarMap::iterator itStart = betaStarts.begin(); itStart != betaStarts.end(); itStart++) {
 
             //clearing vectors.  Since I fill my root tree in the beta loop I will clear vectors here
-            tof.clear();
-            qdc.clear();
-            snrl.clear();
-            snrr.clear();
-            pos.clear();
-            tdiff.clear();
-            ben.clear();
-            bqdcl.clear();
-            bqdcr.clear();
-            bsnrl.clear();
-            bsnrr.clear();
-            cyc.clear();
-            bcyc.clear();
+            tof=-9999;
+            qdc=-9999;
+            snrl=-9999;
+            snrr=-9999;
+            pos=-9999;
+            tdiff=-9999;
+            ben=-9999;
+            bqdcl=-9999;
+            bqdcr=-9999;
+            bsnrl=-9999;
+            bsnrr=-9999;
+            cyc=-9999;
+            bcyc=-9999;
             gen.clear();
-            Vtime.clear();
+            Vtime=-9999;
             Gtime.clear();
-            Btime.clear();
+            Btime=-9999;
             BGtime.clear();
-            vid.clear();
-            vtype.clear();
-            bid.clear();
+            vid=-9999;
+            vtype=-9999;
+            bid=-9999;
             gid.clear();
-            vsize.clear();
+            vsize=-9999;
             gsize.clear();
-            bsize.clear();
+            bsize=-9999;
 
             BarDetector beta_start = (*itStart).second;
             unsigned startLoc = (*itStart).first.first;
@@ -386,26 +386,26 @@ bool Anl1471Processor::Process(RawEvent &event) {
 
 //fill vandle and beta vectors
 #ifdef useroot
-            tof.emplace_back(corTof);
-            qdc.emplace_back(bar.GetQdc());
-            snrl.emplace_back(bar.GetLeftSide().GetTrace().GetSignalToNoiseRatio());
-            snrr.emplace_back(bar.GetRightSide().GetTrace().GetSignalToNoiseRatio());
-            pos.emplace_back(bar.GetQdcPosition());
-            tdiff.emplace_back(bar.GetTimeDifference());
-            ben.emplace_back(beta_start.GetQdc());
-            bqdcl.emplace_back(beta_start.GetLeftSide().GetTraceQdc());
-            bqdcr.emplace_back(beta_start.GetRightSide().GetTraceQdc());
-            bsnrl.emplace_back(beta_start.GetLeftSide().GetTrace().GetSignalToNoiseRatio());
-            bsnrr.emplace_back(beta_start.GetRightSide().GetTrace().GetSignalToNoiseRatio());
-            cyc.emplace_back(vcyc_time);
-            bcyc.emplace_back(bcyc_time);
-            Vtime.emplace_back(vtime);
-            Btime.emplace_back(btime);
-            vid.emplace_back(barLoc);
-            vtype.emplace_back(barType);
-            bid.emplace_back(startLoc);
-            vsize.emplace_back(vbars.size());
-            bsize.emplace_back(betaStarts.size());
+            tof=corTof;
+            qdc=bar.GetQdc();
+            snrl=bar.GetLeftSide().GetTrace().GetSignalToNoiseRatio();
+            snrr=bar.GetRightSide().GetTrace().GetSignalToNoiseRatio();
+            pos=bar.GetQdcPosition();
+            tdiff=bar.GetTimeDifference();
+            ben=beta_start.GetQdc();
+            bqdcl=beta_start.GetLeftSide().GetTraceQdc();
+            bqdcr=beta_start.GetRightSide().GetTraceQdc();
+            bsnrl=beta_start.GetLeftSide().GetTrace().GetSignalToNoiseRatio();
+            bsnrr=beta_start.GetRightSide().GetTrace().GetSignalToNoiseRatio();
+            cyc=vcyc_time;
+            bcyc=bcyc_time;
+            Vtime=vtime;
+            Btime=btime;
+            vid=barLoc;
+            vtype=barType;
+            bid=startLoc;
+            vsize=vbars.size();
+            bsize=betaStarts.size();
 
             //fill pre-made vandle related root histograms
             if (barType == 1) {
@@ -440,15 +440,15 @@ bool Anl1471Processor::Process(RawEvent &event) {
         for (vector<ChanEvent *>::const_iterator itGe = geEvts.begin(); itGe != geEvts.end(); itGe++) {
 
             //clear vectors here since this for loop fills the root tree
-            g_en.clear();
-            g_time.clear();
-            g_cyc.clear();
+            g_en=-9999;
+            g_time=-9999;
+            g_cyc=-9999;
             g_ben.clear();
             g_btime.clear();
             g_bcyc.clear();
-            g_id.clear();
+            g_id=-9999;
             g_bid.clear();
-            g_size.clear();
+            g_size=-9999;
             g_bsize.clear();
 
             //variables used for calculations and filling vectors
@@ -497,11 +497,11 @@ bool Anl1471Processor::Process(RawEvent &event) {
 
 #ifdef useroot
             //fill gamma vectors
-            g_en.emplace_back(ge_energy);
-            g_time.emplace_back(ge_time);
-            g_cyc.emplace_back(grow_decay_time);
-            g_id.emplace_back(ge_id);
-            g_size.emplace_back(geEvts.size());
+            g_en=ge_energy;
+            g_time=ge_time;
+            g_cyc=grow_decay_time;
+            g_id=ge_id;
+            g_size=geEvts.size();
 
             //fill pre-made gamma root histograms
             GAMMA_SINGLES->Fill(ge_energy);
