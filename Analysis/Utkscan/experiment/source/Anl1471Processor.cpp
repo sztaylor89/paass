@@ -193,7 +193,7 @@ bool Anl1471Processor::Process(RawEvent &event) {
     vector < ChanEvent * > geEvts;
     vector <vector<AddBackEvent>> geAddback;
 
-    if (event.GetSummary("vandle")->GetList().empty()) {
+    if (event.GetSummary("vandle")->GetList().size() !=0) {
         vbars = ((VandleProcessor *) DetectorDriver::get()->GetProcessor("VandleProcessor"))->GetBars();
     }
 
@@ -203,7 +203,7 @@ bool Anl1471Processor::Process(RawEvent &event) {
     betaStarts = startBars.GetBarMap();
 
 
-    if (event.GetSummary("ge")->GetList().empty()) {
+    if (event.GetSummary("ge")->GetList().size() !=0) {
         geEvts = ((GeProcessor *) DetectorDriver::get()->GetProcessor("GeProcessor"))->GetGeEvents();
         geAddback = ((GeProcessor *) DetectorDriver::get()->GetProcessor("GeProcessor"))->GetAddbackEvents();
     }
@@ -274,7 +274,7 @@ bool Anl1471Processor::Process(RawEvent &event) {
         //loop over beta events
         for (BarMap::iterator itStart = betaStarts.begin(); itStart != betaStarts.end(); itStart++) {
 
-            //clearing vectors.  Since I fill my root tree in the beta loop I will clear vectors here
+            //clearing vectors and variables.  Since I fill my root tree in the beta loop I will clear vectors here
             tof=-9999;
             qdc=-9999;
             snrl=-9999;
@@ -310,8 +310,7 @@ bool Anl1471Processor::Process(RawEvent &event) {
 
             double tofOffset = cal.GetTofOffset(startLoc);
             double TOF = bar.GetCorTimeAve() - beta_start.GetCorTimeAve() + tofOffset;
-            double corTof =
-                    ((VandleProcessor *) DetectorDriver::get()->GetProcessor("VandleProcessor"))->CorrectTOF(TOF, bar
+            double corTof = ((VandleProcessor *) DetectorDriver::get()->GetProcessor("VandleProcessor"))->CorrectTOF(TOF, bar
                             .GetFlightPath(), cal.GetZ0());
 
             //tape move veto cut for damm
@@ -419,7 +418,7 @@ bool Anl1471Processor::Process(RawEvent &event) {
                 BARvsTDIFF_Small->Fill(bar.GetTimeDifference(), barLoc);
                 BARvsCORTOF_Small->Fill(corTof, barLoc);
             }
-            BETA->Fill(beta_start.GetLeftSide().GetTraceQdc(), beta_start.GetLeftSide().GetTrace().GetSignalToNoiseRatio());//bqdcl vs bsnrl
+            BETA->Fill(beta_start.GetLeftSide().GetTraceQdc(), beta_start.GetLeftSide().GetTrace().GetSignalToNoiseRatio());  //bqdcl vs bsnrl
             BetaGrowDecay->Fill(beta_start.GetQdc(),bcyc_time);
             NeutronGrowDecay->Fill(bar.GetQdc(),vcyc_time);
 
