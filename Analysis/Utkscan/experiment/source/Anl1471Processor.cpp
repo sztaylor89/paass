@@ -193,7 +193,7 @@ bool Anl1471Processor::Process(RawEvent &event) {
     vector < ChanEvent * > geEvts;
     vector <vector<AddBackEvent>> geAddback;
 
-    if (event.GetSummary("vandle")->GetList().empty()) {
+    if (event.GetSummary("vandle")->GetList().size() !=0) {
         vbars = ((VandleProcessor *) DetectorDriver::get()->GetProcessor("VandleProcessor"))->GetBars();
     }
 
@@ -203,7 +203,7 @@ bool Anl1471Processor::Process(RawEvent &event) {
     betaStarts = startBars.GetBarMap();
 
 
-    if (event.GetSummary("ge")->GetList().empty()) {
+    if (event.GetSummary("ge")->GetList().size() !=0) {
         geEvts = ((GeProcessor *) DetectorDriver::get()->GetProcessor("GeProcessor"))->GetGeEvents();
         geAddback = ((GeProcessor *) DetectorDriver::get()->GetProcessor("GeProcessor"))->GetAddbackEvents();
     }
