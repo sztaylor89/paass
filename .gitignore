@@ -6,7 +6,6 @@
 *.swp
 *.layout
 *#*
-.*.cmd
 *.orig
 
 #Documentation directories and files
