@@ -64,6 +64,7 @@ private:
     TH1D *BETA_GATED_GAMMA;
     TH1D *Vsize;
     TH1D *Bsize;
+    TH1D *BSingleSize;
     TH1D *Gsize;
     TH2D *BETA;
     TH2D *GammaGrowDecay;

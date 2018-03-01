@@ -80,8 +80,8 @@ namespace dammIds {
     namespace experiment {
         const int DD_TRACES  = 0;
         const int D_TEST  = 1;
-        const int D_BADLOCATION  = 2;
-        const int D_STARTLOC  = 3;
+        const int D_GAMMASINGLES  = 2;
+        const int D_GAMMABETA  = 3;
         const int DD_DEBUGGING4  = 4;
         const int DD_MedCTOFvQDC  = 5;
         const int DD_MedVetoed  = 6;
@@ -99,9 +99,9 @@ using namespace dammIds::experiment;
 
 void Anl1471Processor::DeclarePlots(void) {
     DeclareHistogram2D(DD_TRACES, S8, SE, "traces");
-    DeclareHistogram1D(D_TEST, SD, "beta gamma neutron test hist");
-    DeclareHistogram1D(D_BADLOCATION, S6, "'bad' trace bar location");
-    DeclareHistogram1D(D_STARTLOC, SB, "Detector Referenced as Start for vandle");
+    DeclareHistogram1D(D_TEST, SD, "gamma-beta-neutron ANL");
+    DeclareHistogram1D(D_GAMMASINGLES, SB, "gamma singles ANL");
+    DeclareHistogram1D(D_GAMMABETA, SB, "gamma-beta ANL");
     DeclareHistogram1D(DD_DEBUGGING4, S7, "Beta Multiplicity");
     DeclareHistogram2D(DD_MedCTOFvQDC, SC, SD, "ANL-medium-<E>-vs-CorTof");
     DeclareHistogram2D(DD_MedVetoed, SC, SD, "ANL-medium-vetoed");
@@ -136,23 +136,24 @@ Anl1471Processor::Anl1471Processor() : EventProcessor(OFFSET, RANGE, "Anl1471PRo
     roottree2_->Branch("gamma", &groot,"gen/D:gtime/D:gcyc/D:gben/D:gbtime/D:gbcyc/D:gid/I:gbid/I:gsize/I:bsize/I");
     roottree2_->Branch("tape", &tapeinfo,"move/b:beam/b");
 
-    QDCvsCORTOF_Medium = new TH2D("MED-QDC vs CorTof","",1100,-100,1000,25000,0,25000);
-    BARvsQDC_Medium = new TH2D("MED-Bar vs QDC","",25100,-100,25000,25,0,25);
-    BARvsTDIFF_Medium = new TH2D("MED-Bar vs TDIFF","",1500,-750,750,25,0,25);
-    BARvsCORTOF_Medium = new TH2D("MED-Bar vs CorTof","",1100,-100,1000,25,0,25);
-    QDCvsCORTOF_Small = new TH2D("SM-QDC vs CorTof","",1100,-100,1000,25000,0,25000);
-    BARvsQDC_Small = new TH2D("SM-Bar vs QDC","",25100,-100,25000,25,0,25);
-    BARvsTDIFF_Small = new TH2D("SM-Bar vs TDIFF","",1500,-750,750,25,0,25);
-    BARvsCORTOF_Small = new TH2D("SM-Bar vs CorTof","",1100,-100,1000,25,0,25);
-    GAMMA_SINGLES = new TH1D("Gamma Singles","",3100,-100,3000);
-    BETA_GATED_GAMMA = new TH1D("Betad Gated Gamma","",3100,-100,3000);
+    QDCvsCORTOF_Medium = new TH2D("MED-QDC_vs_CorTof","",1100,-100,1000,25000,0,25000);
+    BARvsQDC_Medium = new TH2D("MED-Bar_vs_QDC","",25100,-100,25000,25,0,25);
+    BARvsTDIFF_Medium = new TH2D("MED-Bar_vs_TDIFF","",1500,-750,750,25,0,25);
+    BARvsCORTOF_Medium = new TH2D("MED-Bar_vs_CorTof","",1100,-100,1000,25,0,25);
+    QDCvsCORTOF_Small = new TH2D("SM-QDC_vs_CorTof","",1100,-100,1000,25000,0,25000);
+    BARvsQDC_Small = new TH2D("SM-Bar_vs_QDC","",25100,-100,25000,25,0,25);
+    BARvsTDIFF_Small = new TH2D("SM-Bar_vs_TDIFF","",1500,-750,750,25,0,25);
+    BARvsCORTOF_Small = new TH2D("SM-Bar_vs_CorTof","",1100,-100,1000,25,0,25);
+    GAMMA_SINGLES = new TH1D("Gamma_Singles","",3100,-100,3000);
+    BETA_GATED_GAMMA = new TH1D("Beta_Gated_Gamma","",3100,-100,3000);
     Vsize = new TH1D("Vsize","",40,0,40);
     Bsize = new TH1D("Bsize","",40,0,40);
+    BSingleSize = new TH1D("BSingleSize","",40,0,40);
     Gsize =new TH1D("Gsize","",40,0,40);
-    BETA = new TH2D("BETA-QDCvsSNR","",8192,0,8192,64,0,64);
-    GammaGrowDecay = new TH2D("Beta gated Gamma Grow/Decay","",3000,0,3000,1200,0,12);
-    BetaGrowDecay = new TH2D("Beta Grow/Decay","",25000,0,25000,1200,0,12);
-    NeutronGrowDecay = new TH2D("Neutron Grow/Decay","",25000,0,25000,1200,0,12);
+    BETA = new TH2D("BETA-QDC_vs_SNR","",8192,0,8192,64,0,64);
+    GammaGrowDecay = new TH2D("Beta_gated_Gamma_Grow/Decay","",3000,0,3000,1200,0,12);
+    BetaGrowDecay = new TH2D("Beta_Grow/Decay","",25000,0,25000,1200,0,12);
+    NeutronGrowDecay = new TH2D("Neutron_Grow/Decay","",25000,0,25000,1200,0,12);
 #endif
 }//end event processor
 
@@ -182,7 +183,7 @@ bool Anl1471Processor::Process(RawEvent &event) {
     map<unsigned int, pair<double, double> > lrtBetas;
 
     BarMap betaStarts_;
-    //BarMap betaSingles_;
+    BarMap betaSingles_;
     vector < ChanEvent * > geEvts;
     vector <vector<AddBackEvent>> geAddback;
 
@@ -191,11 +192,16 @@ bool Anl1471Processor::Process(RawEvent &event) {
                 GetProcessor("VandleProcessor"))->GetBars();
 
 
-    static const vector<ChanEvent *> &doubleBetaStarts =
-            event.GetSummary("beta:double:start")->GetList();
+    static const vector<ChanEvent *> &doubleBetaStarts = event.GetSummary("beta:double:start")->GetList();
+    static const vector<ChanEvent *> &doubleBetaSingles = event.GetSummary("beta:double:singles")->GetList();
+
     BarBuilder startBars(doubleBetaStarts);
     startBars.BuildBars();
     betaStarts_ = startBars.GetBarMap();
+
+    BarBuilder singleBetaBars(doubleBetaSingles);
+    singleBetaBars.BuildBars();
+    betaSingles_ = singleBetaBars.GetBarMap();
 
     //if(event.GetSummary("beta:double")->GetList().size() != 0) {
     //    betas = ((DoubleBetaProcessor *) DetectorDriver::get()->
@@ -205,13 +211,7 @@ bool Anl1471Processor::Process(RawEvent &event) {
     //              GetProcessor("DoubleBetaProcessor"))->GetLowResBars();
     //}
     //}
-
-    //static const vector<ChanEvent*> &doubleBetaSingles =
-    //	event.GetSummary("beta:double:singles")->GetList();
-    //BarBuilder gestartBars(doubleBetaSingles);
-    //gestartBars.BuildBars();
-    //betaSingles_=gestartBars.GetBarMap();
-
+    
 
     if (event.GetSummary("ge")->GetList().size() != 0) {
         geEvts = ((GeProcessor *) DetectorDriver::get()->
@@ -223,6 +223,7 @@ bool Anl1471Processor::Process(RawEvent &event) {
 #ifdef useroot
     Vsize->Fill(vbars.size());
     Bsize->Fill(betaStarts_.size());
+    BSingleSize->Fill(betaSingles_.size());
     Gsize->Fill(geEvts.size());
 
 
@@ -259,18 +260,7 @@ bool Anl1471Processor::Process(RawEvent &event) {
             barType = 1;
 
 
-        //stuff to test TDIFF spike
-        /*if (barId.first == 2){
-            plot(DD_DEBUGGING0,
-                 bar.GetTimeDifference()*2+1000,
-                 bar.GetLeftSide().GetMaximumValue());
-            plot(DD_DEBUGGING1,
-                 bar.GetTimeDifference()*2+1000,
-                 bar.GetRightSide().GetMaximumValue());
-            }
-            plot(DD_DEBUGGING2,
-             bar.GetTimeDifference()*2+1000, barId.first);
-        */
+
         unsigned int barLoc = barId.first;
         const TimingCalibration cal = bar.GetCalibration();
 
@@ -474,9 +464,9 @@ bool Anl1471Processor::Process(RawEvent &event) {
                 //plot(DD_grow_decay, ge_energy, grow_decay_time);
             }
 
-            if (doubleBetaStarts.size() != 0) {
-                for (BarMap::iterator itGB = betaStarts_.begin();
-                     itGB != betaStarts_.end(); itGB++) {
+            if (doubleBetaSingles.size() != 0) {
+                for (BarMap::iterator itGB = betaSingles_.begin();
+                     itGB != betaSingles_.end(); itGB++) {
                     gb_start = (*itGB).second;
                     gb_startLoc = (*itGB).first.first;
                     gb_en = gb_start.GetQdc();
@@ -504,11 +494,13 @@ bool Anl1471Processor::Process(RawEvent &event) {
 
             roottree2_->Fill();
             GAMMA_SINGLES->Fill(ge_energy);
+            plot(D_GAMMASINGLES,ge_energy);
             //            GrowDecay->Fill(ge_energy,grow_decay_time);
             if (doubleBetaStarts.size() != 0) {
                 BETA_GATED_GAMMA->Fill(ge_energy);
                 GammaGrowDecay->Fill(ge_energy, grow_decay_time);
                 plot(DD_grow_decay, ge_energy, grow_decay_time);
+                plot(D_GAMMABETA,ge_energy);
             }
 #endif
         }
