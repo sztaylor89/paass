@@ -215,6 +215,7 @@ int DetectorDriver::ThreshAndCal(ChanEvent *chan, RawEvent& rawev) {
     string subtype    = chanId.GetSubtype();
     map<string, int> tags = chanId.GetTagMap();
     bool hasStartTag  = chanId.HasTag("start");
+    bool hasSinglesTag = chanId.HasTag("singles");
     Trace &trace      = chan->GetTrace();
 
     RandomPool* randoms = RandomPool::get();
@@ -276,6 +277,12 @@ int DetectorDriver::ThreshAndCal(ChanEvent *chan, RawEvent& rawev) {
     if(hasStartTag && type != "logic") {
         summary =
             rawev.GetSummary(type + ':' + subtype + ':' + "start", false);
+        if (summary != NULL)
+            summary->AddEvent(chan);
+    }
+
+    if (hasSinglesTag){
+        summary = rawev.GetSummary(type + ':' + subtype + ':' + "singles", false);
         if (summary != NULL)
             summary->AddEvent(chan);
     }
