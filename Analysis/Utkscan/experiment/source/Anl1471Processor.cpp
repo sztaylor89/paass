@@ -496,7 +496,7 @@ bool Anl1471Processor::Process(RawEvent &event) {
             GAMMA_SINGLES->Fill(ge_energy);
             plot(D_GAMMASINGLES,ge_energy);
             //            GrowDecay->Fill(ge_energy,grow_decay_time);
-            if (doubleBetaStarts.size() != 0) {
+            if (doubleBetaSingles.size() != 0) {
                 BETA_GATED_GAMMA->Fill(ge_energy);
                 GammaGrowDecay->Fill(ge_energy, grow_decay_time);
                 plot(DD_grow_decay, ge_energy, grow_decay_time);
