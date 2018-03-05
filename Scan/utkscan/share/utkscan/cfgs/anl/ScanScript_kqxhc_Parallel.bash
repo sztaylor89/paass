@@ -10,7 +10,7 @@
 name=${1}    #output filename, reads in 1st command line argument,
 number=${2}  #number used to select ldf file, reads in second command line argument
 data="/scratch2/anl2015/FEB2015/135SB"    #data directory
-config="Config_135_102017.xml"    #config filename
+config="135_12_final.xml"    #config filename
 config_path="/home/sztaylor/paass/Scan/utkscan/share/utkscan/cfgs/anl"    #config directory
 firmware="R30981"    #firmware version
 hz="250"   #frequency of pixie boards used

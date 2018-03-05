@@ -1,29 +1,31 @@
 #!/bin/bash
 
-#date: 11/1/17
+#date: 5/30/17
 #author: S. Z. Taylor
 #email: staylo65@vols.utk.edu
 
-#to be used with AllScan.bash
-#works with only first .ldf 
-
-name=${1}    #output filename, reads in 1st command line argument,
-number=${2}  #number used to select ldf file, reads in second command line argument
-data="/scratch2/anl2015/FEB2015/135SB"    #data directory
-config="135_12_final.xml"    #config filename
+output=${1:-aaa}    #output filename, reads in 1st command line argument, otherwise defaults to aaa
+data="/scratch2/anl2015/BCKG"    #data directory
+config="136_11_final.xml"    #config filename
 config_path="/home/sztaylor/paass/Scan/utkscan/share/utkscan/cfgs/anl"    #config directory
 firmware="R30981"    #firmware version
 hz="250"   #frequency of pixie boards used
 
-output="$name$number" #concatenates file number to name
-
 rm -f $output.his $output.dat $output.drr $output.list $output.log $output.root    #removes files if they already exist
 
-for i in `ls -tr $data/a135feb_12.ldf`   
-do
-    cmd=$cmd"file $i\nrun\nsync\n"
-done
+#for i in `ls -tr $data/background_0207_930AM.ldf`   #uncomment to run 1 file 
+for i in `ls -tr $data/background_0207_930AM*.ldf`   #uncomment to run all files with similar name 
 
+do
+    #if [ "$i" == "$data/a135feb_12-15.ldf" ];    #if statement to skip a particular file
+    #then
+    #continue
+    #fi
+
+
+    cmd=$cmd"file $i\nrun\nsync\n"   #produces cmd file type output for program to use
+
+done
 
 cmd=$cmd"quit\n"    #closes the program
 
@@ -35,3 +37,6 @@ echo -e $cmd | ./utkscan -c $config_path/$config -o $output -f $firmware --frequ
 
 #To-Do/Improvements
 #option to pass config file and path, data directory and file, as well as firmware as command line argument(but this kind of defeats the purpose of having this script.
+
+#and you can kill the processes in a one liner with kill $(ps -e -o pid,uname,args | grep $USER |grep "utkscan" | grep -v grep |cut -d " " -f2)
+#you can add more specific scan selection by adding more |grep pattern's before the grep -v grep
