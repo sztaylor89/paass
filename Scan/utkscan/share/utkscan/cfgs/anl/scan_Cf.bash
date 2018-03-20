@@ -6,15 +6,15 @@
 
 output=${1:-aaa}    #output filename, reads in 1st command line argument, otherwise defaults to aaa
 data="/scratch2/anl2015/TESTS"    #data directory
-config="135_12_final.xml"    #config filename
+config="Config_Cf_Midway03.xml"    #config filename
 config_path="/home/sztaylor/paass/Scan/utkscan/share/utkscan/cfgs/anl"    #config directory
 firmware="R30981"    #firmware version
 hz="250"   #frequency of pixie boards used
 
 rm -f $output.his $output.dat $output.drr $output.list $output.log $output.root    #removes files if they already exist
 
-#for i in `ls -tr $data/filename.ldf`   #uncomment to run 1 file 
-for i in `ls -tr $data/gain-1*.ldf`   #uncomment to run all files with similar name 
+for i in `ls -tr $data/cf_midway_02.ldf`   #uncomment to run 1 file 
+#for i in `ls -tr $data/cf_midway_02*.ldf`   #uncomment to run all files with similar name 
 
 do
     #if [ "$i" == "$data/a135feb_12-15.ldf" ];    #if statement to skip a particular file
