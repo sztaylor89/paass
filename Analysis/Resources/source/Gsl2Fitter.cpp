@@ -32,6 +32,15 @@ int SiPmtFunction(const gsl_vector *x, void *FitData, gsl_vector *f);
  * \return an integer that GSL does something magical with */
 int CalcSiPmtJacobian(const gsl_vector *x, void *FitData, gsl_matrix *J);
 
+/** Defines the GSL fitting function for the fast output of SiPMTs
+ * \param [in] x : the vector of gsl starting parameters
+ * \param [in] FitData : The data to use for the fit
+ * \param [in] f : pointer to the function
+ * \param [in] J : pointer to the Jacobian of the function
+ * \return an integer that GSL does something magical with */
+int SiPmtFunctionDerivative(const gsl_vector *x, void *FitData, gsl_vector *f,
+                            gsl_matrix *J);
+
 using namespace std;
 
 double GslFitter::CalculatePhase(const std::vector<double> &data,
@@ -171,6 +180,7 @@ int CalcPmtJacobian(const gsl_vector *x, void *FitData, gsl_matrix *J) {
 int SiPmtFunction(const gsl_vector *x, void *FitData, gsl_vector *f) {
     size_t n = ((struct GslFitter::FitData *) FitData)->n;
     double *y = ((struct GslFitter::FitData *) FitData)->y;
+    double *sigma  = ((struct GslFitter::FitData *)FitData)->sigma;
     double gamma = ((struct GslFitter::FitData *) FitData)->gamma;
     double qdc = ((struct GslFitter::FitData *) FitData)->qdc;
 
@@ -181,13 +191,14 @@ int SiPmtFunction(const gsl_vector *x, void *FitData, gsl_vector *f) {
         double diff = t - phi;
         double Yi = (qdc / (gamma * sqrt(2 * M_PI))) *
                     exp(-diff * diff / (2 * gamma * gamma));
-        gsl_vector_set(f, i, Yi - y[i]);
+        gsl_vector_set(f, i, (Yi - y[i])/sigma[i]);
     }
     return (GSL_SUCCESS);
 }
 
 int CalcSiPmtJacobian(const gsl_vector *x, void *FitData, gsl_matrix *J) {
     size_t n = ((struct GslFitter::FitData *) FitData)->n;
+    double *sigma  = ((struct GslFitter::FitData *)FitData)->sigma;
     double gamma = ((struct GslFitter::FitData *) FitData)->gamma;
     double qdc = ((struct GslFitter::FitData *) FitData)->qdc;
 
@@ -197,12 +208,19 @@ int CalcSiPmtJacobian(const gsl_vector *x, void *FitData, gsl_matrix *J) {
     for (size_t i = 0; i < n; i++) {
         double t = i;
         double diff = t - phi;
+        double s = sigma[i];
 
         dphi = (qdc * diff / (pow(gamma, 3) * sqrt(2 * M_PI))) *
                exp(-diff * diff / (2 * gamma * gamma));
 
-        gsl_matrix_set(J, i, 0, dphi);
+        gsl_matrix_set(J, i, 0, dphi/s);
     }
     return (GSL_SUCCESS);
 }
 
+int SiPmtFunctionDerivative (const gsl_vector * x, void *FitData, gsl_vector * f,
+                             gsl_matrix * J) {
+    SiPmtFunction (x, FitData, f);
+    CalcSiPmtJacobian (x, FitData, J);
+    return(GSL_SUCCESS);
+}
