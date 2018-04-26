@@ -44,7 +44,7 @@ public:
 
     ///Sets the isFastSiPm_ flag
     ///@param[in] a : The value that we are going to set
-    void SetIsFastSiPm(const bool &a) { isFastSiPm_ = a; }
+    virtual void SetIsFastSiPm(const bool &a) { isFastSiPm_ = a; }
 
     /// @brief Structure necessary for the GSL fitting routines
     struct FitData {

@@ -61,8 +61,7 @@ void FittingAnalyzer::Analyze(Trace &trace, const std::string &detType,
 
     //We need to check and make sure that we don't need to use the timing
     // functions for the SiPM fast signals
-    bool isFastSiPm = detType == "beta" && detSubtype == "double"
-                      && tagMap.find("timing") != tagMap.end();
+    bool isFastSiPm = detType == "beta" && detSubtype == "double" && tagMap.find("timing") != tagMap.end();
 
     if (!isFastSiPm) {
         if (trace.GetBaselineInfo().second >
@@ -82,6 +81,7 @@ void FittingAnalyzer::Analyze(Trace &trace, const std::string &detType,
     if (isFastSiPm)
         pars = globals->GetFitPars(detType + ":" + detSubtype + ":timing");
 
+    driver_->SetIsFastSiPm(isFastSiPm);
     driver_->SetQdc(trace.GetQdc());
     double phase = driver_->CalculatePhase(trace.GetWaveform(), pars,
                                            trace.GetMaxInfo(),
