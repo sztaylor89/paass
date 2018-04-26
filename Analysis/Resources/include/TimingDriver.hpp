@@ -61,9 +61,15 @@ public:
     /// Sets the QDC that we want to set
     /// \param[in] a the qdc of the waveform for the fit
     void SetQdc(const double &a) { qdc_ = a; }
+
+    /// Sets Fitter to use the SiPmFunction rather than the normal PMTFunction
+    /// \param[in] a bool of isFastSiPm
+    void SetIsFastSiPm(const bool &a) { isFastSiPm_ = a; }
 protected:
     std::vector<double> results_; //!< Vector containing results
     double qdc_;//!< qdc of the waveform being fitted
+    bool isFastSiPm_;//!<is a Fast (trigger) signal from the SiPm, These were primarily used in the ANL1471
+
 };
 
 #endif //PIXIESUITE_TIMINGDRIVER_HPP
