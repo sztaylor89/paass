@@ -54,7 +54,7 @@ double GslFitter::CalculatePhase(const std::vector<double> &data,
     } else {
         p = 1;
         xInit[0] = (double) data.size() * 0.5;
-
+	cout << "MADE IT INTO isFastSiPm!!!!!!!!!!!!!!! /n/n/n";
         f.f = &SiPmtFunction;
         f.df = &CalcSiPmtJacobian;
     }
