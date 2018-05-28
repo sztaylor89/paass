@@ -41,6 +41,7 @@ struct VandleRoot{
     double bqdcr;
     double bsnrl;
     double bsnrr;
+    double btdiff;
     double cyc;
     double bcyc;
     double HPGE;
@@ -129,7 +130,7 @@ Anl1471Processor::Anl1471Processor() : EventProcessor(OFFSET, RANGE, "Anl1471PRo
     roottree1_ = new TTree("V","");
     roottree2_ = new TTree("G","");
 
-    roottree1_->Branch("vandle", &vroot, "tof/D:qdc/D:snrl/D:snrr/D:pos/D:tdiff/D:ben/D:bqdcl/D:bqdcr/D:bsnrl/D:bsnrr/D:cyc/D"
+    roottree1_->Branch("vandle", &vroot, "tof/D:qdc/D:snrl/D:snrr/D:pos/D:tdiff/D:ben/D:bqdcl/D:bqdcr/D:bsnrl/D:bsnrr/D:btdiff/D:cyc/D"
             ":bcyc/D:HPGE/D:BGtdiff/D:Gtime/D:vid/I:vtype/I:bid/I:gid/I:vsize/I:bsize/I");
     roottree1_->Branch("tape", &tapeinfo,"move/b:beam/b");
 
@@ -352,6 +353,7 @@ bool Anl1471Processor::Process(RawEvent &event) {
                     vroot.bqdcr = beta_start.GetRightSide().GetTraceQdc();
                     vroot.bsnrl = beta_start.GetLeftSide().GetTrace().GetSignalToNoiseRatio();
                     vroot.bsnrr = beta_start.GetRightSide().GetTrace().GetSignalToNoiseRatio();
+                    vroot.btdiff = beta_start.GetTimeDifference();
                     vroot.cyc = vcyc_time;
                     vroot.bcyc = bcyc_time;
                     vroot.HPGE = HPGE_energy;
